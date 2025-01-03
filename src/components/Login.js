@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Import de useNavigate
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import '../styles/styles.css';
-import { useNavigate } from 'react-router-dom'; // Import de useNavigate
-//test push 
+
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     role: ''
   });
+  const [roles, setRoles] = useState([]); // **NOUVEL AJOUT : Liste des rôles dynamiques**
   const [errors, setErrors] = useState({});
   const [apiResponse, setApiResponse] = useState('');
   const navigate = useNavigate(); // Initialisation de useNavigate
+
+  // **NOUVEL AJOUT : Récupération des rôles depuis le backend**
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await axios.get('https://localhost:7141/api/roles');
+        setRoles(response.data); // Mettre à jour la liste des rôles
+      } catch (error) {
+        console.error('Erreur lors de la récupération des rôles :', error);
+      }
+    };
+  
+    fetchRoles();
+  }, []);
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,11 +58,13 @@ const Login = () => {
         if (response.data.success) {
           console.log('Connexion réussie :', response.data);
 
-          // Redirection en fonction du rôle
+          // **NOUVEL AJOUT : Redirection en fonction du rôle**
           if (response.data.role === 'Admin') {
             navigate('/admin'); // Redirige vers la page Admin
           } else if (response.data.role === 'Receptionist') {
-            navigate('/reception'); // Redirige vers une autre page si nécessaire
+            navigate('/reception'); // Redirige vers la page Réception
+          } else if (response.data.role === 'Personnel De Menage') {
+            navigate('/PersonnelDeMenage'); // Redirige vers une page Manager
           }
         }
       } catch (error) {
@@ -113,16 +131,17 @@ const Login = () => {
           <div className="mb-3">
             <label htmlFor="role" className="form-label">Sélectionnez un rôle</label>
             <select
-              id="role"
-              name="role"
-              className="form-control"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="" disabled>Sélectionnez votre rôle</option>
-              <option value="Receptionist">Receptionist</option>
-              <option value="Admin">Admin</option>
-            </select>
+  id="role"
+  name="role"
+  className="form-control"
+  value={formData.role}
+  onChange={handleChange}
+>
+  <option value="" disabled>Sélectionnez votre rôle</option>
+  {roles.map((role, index) => (
+    <option key={index} value={role}>{role}</option>
+  ))}
+</select>
             {errors.role && <span className="text-danger">{errors.role}</span>}
           </div>
 
