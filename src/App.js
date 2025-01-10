@@ -27,6 +27,8 @@ import Login from './components/Login';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import ReceptionDashboard from './components/Reception/ReceptionDashboard'; // Exemple pour Receptionist
 import PersonnelDeMenageUI from './components/PersonnelDeMenage/PersonnelDeMenageUI';
+import Layout from './components/Receptionist/Layout';
+import Reservations from './components/Receptionist/Reservations';
 function App() {
   return (
     <Router>
@@ -34,6 +36,8 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/reception" element={<ReceptionDashboard />} />
+        <Route path="/Receptionist" element={<Layout></Layout>} />
+        <Route path="/Receptionist/reservations" element={<Layout><Reservations /></Layout>} />
         <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} /> {/* Correct usage of Route with 'element' */}
       </Routes>
     </Router>
@@ -42,4 +46,8 @@ function App() {
 
 export default App;
 
+
+
+
+// In your routes:
 

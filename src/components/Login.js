@@ -62,7 +62,7 @@ const Login = () => {
           if (response.data.role === 'Admin') {
             navigate('/admin'); // Redirige vers la page Admin
           } else if (response.data.role === 'Receptionist') {
-            navigate('/reception'); // Redirige vers la page Réception
+            navigate('/Receptionist'); // Redirige vers la page Réception
           } else if (response.data.role === 'Personnel De Menage') {
             navigate('/PersonnelDeMenage'); // Redirige vers une page Manager
           }
