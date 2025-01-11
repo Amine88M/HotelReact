@@ -1,38 +1,50 @@
 import React from 'react';
-// import '../styles/styles.css';
 
 const Sidebar = () => {
   const handleLogout = () => {
     // Effectuer des actions nécessaires avant la déconnexion, si nécessaire
-    window.location.href = '/logout'; // Redirige vers la route de déconnexion
+    window.location.href = '/'; // Redirige vers la route de déconnexion
   };
 
   return (
-    <aside className="sidebar d-flex flex-column">
-      <h2>Gestion des Comptes</h2>
-      <nav className="nav flex-column">
-        <a href="/admin/create-user" className="nav-link">
-          <span className="icon">➕</span> Créer un Compte
+    <aside className="w-64 bg-gray-800 text-white min-h-screen p-4">
+      <h2 className="text-xl font-bold mb-6">Gestion des Comptes</h2>
+      <nav className="space-y-2">
+        <a
+          href="/admin/create-user"
+          className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-700 transition-colors"
+        >
+          <span>➕</span> Créer un Compte
         </a>
-        <a href="/admin/user-list" className="nav-link active">
-          <span className="icon">🏠</span> Liste des Utilisateurs
+        <a
+          href="/admin/user-list"
+          className="flex items-center gap-2 px-4 py-2 rounded bg-gray-700"
+        >
+          <span>🏠</span> Liste des Utilisateurs
         </a>
-        <a href="/admin/assign-roles" className="nav-link">
-          <span className="icon">⚙️</span> Attribuer Rôles
+        <a
+          href="/admin/assign-roles"
+          className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-700 transition-colors"
+        >
+          <span>⚙️</span> Attribuer Rôles
         </a>
-        <a href="/admin/reset-password" className="nav-link">
-          <span className="icon">🔒</span> Réinitialiser Mot de Passe
+        <a
+          href="/admin/reset-password"
+          className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-700 transition-colors"
+        >
+          <span>🔒</span> Réinitialiser Mot de Passe
         </a>
       </nav>
-      <div className="mt-auto p-3">
-        <div className="d-flex align-items-center mb-3">
-          <span className="me-2">👤</span> <span>Utilisateur</span>
+      
+      <div className="absolute bottom-0 left-0 w-64 p-4 border-t border-gray-700">
+        <div className="flex items-center gap-2 mb-3 text-gray-300">
+          <span>👤</span> <span>Utilisateur</span>
         </div>
         <button
-          className="btn btn-danger w-100"
+          className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
           onClick={handleLogout}
         >
-          <span className="me-2">🚪</span> Logout
+          <span>🚪</span> Logout
         </button>
       </div>
     </aside>

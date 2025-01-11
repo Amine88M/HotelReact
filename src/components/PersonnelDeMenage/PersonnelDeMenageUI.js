@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, User } from 'lucide-react';
+import { ChevronDown, User, Camera, Key } from 'lucide-react';
 
-const API_BASE_URL = 'https://localhost:7141'; // Replace with your .NET API port
+const API_BASE_URL = 'https://localhost:7141';
 
 const PersonnelDeMenageUI = () => {
   const [rooms, setRooms] = useState([]);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const user = {
     name: "Wadie Saad",
@@ -39,12 +40,9 @@ const PersonnelDeMenageUI = () => {
         },
         body: JSON.stringify({ status: newStatus })
       });
-
       if (!response.ok) throw new Error('Failed to update room status');
-      
-      // Update local state
-      setRooms(prevRooms => 
-        prevRooms.map(room => 
+      setRooms(prevRooms =>
+        prevRooms.map(room =>
           room.id === roomId ? { ...room, status: newStatus } : room
         )
       );
@@ -54,65 +52,97 @@ const PersonnelDeMenageUI = () => {
     setOpenDropdown(null);
   };
 
-  // Filter out clean rooms
-  const visibleRooms = rooms.filter(room => room.status !== "Available");
+  const visibleRooms = rooms.filter(room => room.status !== "Clean");
 
   if (loading) {
-    return <div className="d-flex justify-content-center align-items-center vh-100">Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
   return (
-    <div className="min-vh-100 bg-light">
-      <header className="bg-white shadow-sm p-3">
-        <div className="container d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center">
-            <h1 className="text-primary">Royal<span className="text-dark">Stay</span>.</h1>
-          </div>
-          <div className="d-flex align-items-center">
-            <div className="rounded-circle bg-secondary d-flex justify-content-center align-items-center" style={{ width: 40, height: 40 }}>
-              <User className="text-white" size={20} />
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm p-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-blue-600 mr-auto">Royal<span className="text-black">Stay</span>.</h1>
+          <div className="flex items-center space-x-2 relative">
+            <span className="text-sm">{user.name}</span>
+            <div className="relative">
+              <button 
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center p-2 rounded-lg hover:bg-gray-100"
+              >
+                <User size={32} className="text-gray-600" />
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1">
+                  <button
+                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                    onClick={() => {/* Handle profile picture change */}}
+                  >
+                    <Camera size={16} />
+                    Change Profile Picture
+                  </button>
+                  <button
+                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                    onClick={() => {/* Handle password change */}}
+                  >
+                    <Key size={16} />
+                    Change Password
+                  </button>
+                  <button className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left">
+                    Déconnexion
+                  </button>
+                </div>
+              )}
             </div>
-            <span className="ms-2 text-muted">{user.name}</span>
-            <ChevronDown className="ms-2 text-muted" size={16} />
           </div>
         </div>
       </header>
 
-      <main className="container py-5">
-        <div className="mb-4">
-          <h2 className="h4 text-dark">Hello, {user.name}</h2>
-          <p className="text-muted">Have a nice day</p>
-        </div>
+      <main className="max-w-7xl mx-auto p-6">
+        <h2 className="text-xl font-semibold text-gray-800">Hello, {user.name}</h2>
+        <p className="text-gray-500 mb-12">Have a nice day!</p>
 
-        <div>
-          <h3 className="h5 text-dark mb-4">List of Hotel Rooms</h3>
-          <div className="list-group">
-            {visibleRooms.map(room => (
-              <div key={room.id} className="list-group-item d-flex justify-content-between align-items-center p-3">
-                <div>
-                  <h5 className="mb-1">{room.number}</h5>
-                  <p className="mb-0 text-muted">{room.floor}</p>
-                </div>
-                <div className="position-relative">
-                  <button 
-                    onClick={() => setOpenDropdown(openDropdown === room.id ? null : room.id)}
-                    className={`btn ${room.status === 'Dirty' ? 'btn-primary' : room.status === 'Cleaning' ? 'btn-warning' : 'btn-success'} dropdown-toggle`}
-                    data-bs-toggle="dropdown"
-                  >
-                    {room.status}
-                  </button>
-                  
-                  {openDropdown === room.id && (
-                    <ul className="dropdown-menu position-absolute end-0 mt-2">
-                      <li><button onClick={() => handleStatusChange(room.id, "Dirty")} className="dropdown-item">Dirty</button></li>
-                      <li><button onClick={() => handleStatusChange(room.id, "Cleaning")} className="dropdown-item">Cleaning</button></li>
-                      <li><button onClick={() => handleStatusChange(room.id, "Clean")} className="dropdown-item">Clean</button></li>
-                    </ul>
-                  )}
-                </div>
+        <h3 className="text-2xl font-medium text-gray-700 mb-6">List of Hotel Rooms</h3>
+        <div className="space-y-4">
+          {visibleRooms.map(room => (
+            <div key={room.id} className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
+              <div>
+                <h4 className="font-medium text-gray-800">{room.number}</h4>
+                <p className="text-gray-500 text-sm">{room.floor}</p>
               </div>
-            ))}
-          </div>
+              <div className="relative">
+                <button 
+                  onClick={() => setOpenDropdown(openDropdown === room.id ? null : room.id)}
+                  className={`px-6 py-2 rounded-lg flex items-center space-x-1 text-white ${room.status === 'Dirty' ? 'bg-blue-500' : room.status === 'Cleaning' ? 'bg-yellow-500' : 'bg-green-500'}`}
+                >
+                  <span>{room.status}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                {openDropdown === room.id && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+                    <button
+                      onClick={() => handleStatusChange(room.id, "Dirty")}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Dirty
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(room.id, "Cleaning")}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Cleaning
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(room.id, "Clean")}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Clean
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </main>
     </div>

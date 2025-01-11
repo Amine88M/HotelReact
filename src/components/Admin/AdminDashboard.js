@@ -69,24 +69,23 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="d-flex">
-      {/* Sidebar */}
+    <div className="flex">
       <Sidebar />
 
-      {/* Main Content */}
-      <main className="main-content">
-        <header className="header">
-          <h1>Liste des Utilisateurs</h1>
-          <div className="actions">
+      <main className="flex-1 p-6">
+        <header className="mb-6">
+          <h1 className="text-2xl font-bold mb-4">Liste des Utilisateurs</h1>
+          <div className="flex gap-4 items-center">
             <input
               type="text"
               placeholder="Rechercher un utilisateur..."
-              className="search-bar"
+              className="px-4 py-2 border rounded-lg flex-1"
               value={search}
               onChange={handleSearchChange}
             />
             <button
-              className="delete-btn"
+              className={`px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors
+                ${selectedUsers.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handleDeleteSelected}
               disabled={selectedUsers.length === 0}
             >
@@ -95,92 +94,102 @@ const AdminDashboard = () => {
           </div>
         </header>
 
-        {/* Messages d'erreur */}
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
-        {/* Table des utilisateurs */}
-        <table className="user-table table table-bordered">
-          <thead>
-            <tr>
-              <th>
-                <input type="checkbox" onChange={handleSelectAll} />
-              </th>
-              <th>Nom</th>
-              <th>Email</th>
-              <th>Rôle</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length > 0 ? (
-              users
-                .filter((user) =>
-                  user.nom?.toLowerCase().includes(search.toLowerCase())
-                )
-                .map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(user.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedUsers([...selectedUsers, user.id]);
-                          } else {
-                            setSelectedUsers(
-                              selectedUsers.filter((id) => id !== user.id)
-                            );
-                          }
-                        }}
-                      />
-                    </td>
-                    <td>{user.nom}</td>
-                    <td>{user.email}</td>
-                    <td>{user.role}</td>
-                    <td>
-                      <span
-                        className={`status ${
-                          user.status === 'active' ? 'active' : 'inactive'
-                        }`}
-                      >
-                        {user.status === 'active' ? 'Actif' : 'Inactif'}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className="edit-btn"
-                        onClick={() => console.log(`Modifier utilisateur ${user.id}`)}
-                      >
-                        Modifier
-                      </button>
-                    </td>
-                  </tr>
-                ))
-            ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <td colSpan="6" className="text-center">
-                  Aucun utilisateur trouvé.
-                </td>
+                <th className="px-6 py-3 border-b">
+                  <input type="checkbox" onChange={handleSelectAll} className="rounded" />
+                </th>
+                <th className="px-6 py-3 border-b text-left">Nom</th>
+                <th className="px-6 py-3 border-b text-left">Email</th>
+                <th className="px-6 py-3 border-b text-left">Rôle</th>
+                <th className="px-6 py-3 border-b text-left">Status</th>
+                <th className="px-6 py-3 border-b text-left">Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.length > 0 ? (
+                users
+                  .filter((user) =>
+                    user.nom?.toLowerCase().includes(search.toLowerCase())
+                  )
+                  .map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 border-b">
+                        <input
+                          type="checkbox"
+                          checked={selectedUsers.includes(user.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedUsers([...selectedUsers, user.id]);
+                            } else {
+                              setSelectedUsers(
+                                selectedUsers.filter((id) => id !== user.id)
+                              );
+                            }
+                          }}
+                          className="rounded"
+                        />
+                      </td>
+                      <td className="px-6 py-4 border-b">{user.nom}</td>
+                      <td className="px-6 py-4 border-b">{user.email}</td>
+                      <td className="px-6 py-4 border-b">{user.role}</td>
+                      <td className="px-6 py-4 border-b">
+                        <span
+                          className={`px-2 py-1 rounded-full text-sm ${
+                            user.status === 'active'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {user.status === 'active' ? 'Actif' : 'Inactif'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 border-b">
+                        <button
+                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                          onClick={() => console.log(`Modifier utilisateur ${user.id}`)}
+                        >
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-4 text-center border-b">
+                    Aucun utilisateur trouvé.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Pagination */}
-        <div className="pagination">
+        <div className="flex items-center justify-center gap-4 mt-6">
           <button
-            id="prev-btn"
+            className={`px-4 py-2 rounded ${
+              currentPage === 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-200 hover:bg-gray-300 transition-colors'
+            }`}
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           >
             &#9664;
           </button>
-          <span id="page-info">
+          <span className="text-gray-600">
             Page {currentPage} sur {totalPages}
           </span>
           <button
-            id="next-btn"
+            className={`px-4 py-2 rounded ${
+              currentPage === totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-200 hover:bg-gray-300 transition-colors'
+            }`}
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           >
