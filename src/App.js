@@ -21,7 +21,6 @@ import './App.css';
   );
 }*/
 import React from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './components/Login';
 import AdminDashboard from './components/Admin/AdminDashboard';
@@ -45,8 +44,6 @@ function App() {
 }
 
 export default App;
-
-
 
 
 // In your routes:

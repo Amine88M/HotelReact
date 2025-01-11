@@ -10,7 +10,6 @@ const ReceptionDashboard = () => {
     fetchReservations();
   }, []);
 
-  // Fetch reservations from backend
   const fetchReservations = async () => {
     try {
       const response = await axios.get("https://localhost:7141/api/reservations");
@@ -20,7 +19,6 @@ const ReceptionDashboard = () => {
     }
   };
 
-  // Handle checkbox select/deselect
   const handleRowSelect = (id) => {
     setSelectedReservations((prev) =>
       prev.includes(id)
@@ -29,7 +27,6 @@ const ReceptionDashboard = () => {
     );
   };
 
-  // Handle select/deselect all rows
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       setSelectedReservations(reservations.map((r) => r.id));
@@ -38,7 +35,6 @@ const ReceptionDashboard = () => {
     }
   };
 
-  // Delete selected reservations
   const handleDeleteSelected = async () => {
     if (selectedReservations.length === 0) {
       Swal.fire("Erreur", "Aucune réservation sélectionnée !", "error");
@@ -59,7 +55,7 @@ const ReceptionDashboard = () => {
         try {
           await axios.post("https://localhost:7141/api/reservations/deleteselected", selectedReservations);
           Swal.fire("Supprimé !", "Les réservations sélectionnées ont été supprimées.", "success");
-          fetchReservations(); // Refresh reservations
+          fetchReservations();
           setSelectedReservations([]);
         } catch (error) {
           console.error("Erreur lors de la suppression des réservations :", error);
@@ -70,22 +66,19 @@ const ReceptionDashboard = () => {
   };
 
   return (
-    <div className="container mt-5">
-      {/* Page Title */}
-      <div className="text-center mb-4">
-        <h1 className="text-success" style={{ fontWeight: "bold" }}>
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-green-600">
           Liste des Réservations
         </h1>
       </div>
 
-      {/* Action Buttons */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <a href="/reservations/create" className="btn btn-success px-4">
+      <div className="flex justify-between items-center mb-6">
+        <a href="/reservations/create" className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors">
           Ajouter une Réservation
         </a>
         <button
-          id="delete-selected-btn"
-          className="btn btn-danger px-4"
+          className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors disabled:bg-gray-400"
           disabled={selectedReservations.length === 0}
           onClick={handleDeleteSelected}
         >
@@ -93,61 +86,60 @@ const ReceptionDashboard = () => {
         </button>
       </div>
 
-      {/* Reservations Table */}
-      <table className="table table-striped shadow-sm">
-        <thead className="table-dark">
-          <tr>
-            <th>
-              <input
-                type="checkbox"
-                id="select-all"
-                onChange={handleSelectAll}
-                checked={selectedReservations.length === reservations.length && reservations.length > 0}
-              />
-            </th>
-            <th>Nom</th>
-            <th>Prénom</th>
-            <th>Date de Réservation</th>
-            <th>Date d'Arrivée (Check-In)</th>
-            <th>Date de Départ (Check-Out)</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {reservations.map((reservation) => (
-            <tr key={reservation.id} data-id={reservation.id}>
-              <td>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-800">
+            <tr>
+              <th className="px-6 py-3">
                 <input
                   type="checkbox"
-                  className="select-row"
-                  checked={selectedReservations.includes(reservation.id)}
-                  onChange={() => handleRowSelect(reservation.id)}
+                  className="rounded border-gray-300"
+                  onChange={handleSelectAll}
+                  checked={selectedReservations.length === reservations.length && reservations.length > 0}
                 />
-              </td>
-              <td>{reservation.nom}</td>
-              <td>{reservation.prenom}</td>
-              <td>{new Date(reservation.dateReservation).toLocaleDateString()}</td>
-              <td>{new Date(reservation.dateCheckIn).toLocaleDateString()}</td>
-              <td>{new Date(reservation.dateCheckOut).toLocaleDateString()}</td>
-              <td>
-                <a
-                  href={`/reservations/details/${reservation.id}`}
-                  className="btn btn-sm btn-info text-white"
-                  style={{ fontWeight: "bold" }}
-                >
-                  Détails
-                </a>
-              </td>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nom</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Prénom</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Date de Réservation</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Date d'Arrivée</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Date de Départ</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {reservations.map((reservation) => (
+              <tr key={reservation.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={selectedReservations.includes(reservation.id)}
+                    onChange={() => handleRowSelect(reservation.id)}
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">{reservation.nom}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{reservation.prenom}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{new Date(reservation.dateReservation).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{new Date(reservation.dateCheckIn).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{new Date(reservation.dateCheckOut).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <a
+                    href={`/reservations/details/${reservation.id}`}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                  >
+                    Détails
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Footer */}
-      <footer className="border-top text-muted mt-5 pt-3">
-        <div className="text-center">
+      <footer className="border-t mt-8 pt-4 text-center text-gray-600">
+        <div>
           &copy; 2024 - GestionReservation -{" "}
-          <a href="/privacy" className="text-success">
+          <a href="/privacy" className="text-green-600 hover:text-green-700">
             Privacy
           </a>
         </div>

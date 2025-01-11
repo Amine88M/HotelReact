@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Import de useNavigate
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate } from 'react-router-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import '../styles/styles.css';
 
@@ -11,32 +10,33 @@ const Login = () => {
     password: '',
     role: ''
   });
-  const [roles, setRoles] = useState([]); // **NOUVEL AJOUT : Liste des rôles dynamiques**
+  const [roles, setRoles] = useState([]);
   const [errors, setErrors] = useState({});
   const [apiResponse, setApiResponse] = useState('');
-  const navigate = useNavigate(); // Initialisation de useNavigate
+  const navigate = useNavigate();
 
-  // **NOUVEL AJOUT : Récupération des rôles depuis le backend**
   useEffect(() => {
     const fetchRoles = async () => {
       try {
         const response = await axios.get('https://localhost:7141/api/roles');
-        setRoles(response.data); // Mettre à jour la liste des rôles
+        if (response.data) {
+          setRoles(response.data);
+        }
       } catch (error) {
-        console.error('Erreur lors de la récupération des rôles :', error);
+        const errorMessage = error.response?.data?.message || 'Erreur lors de la récupération des rôles';
+        setApiResponse(errorMessage);
       }
     };
   
     fetchRoles();
   }, []);
-  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -51,101 +51,94 @@ const Login = () => {
 
     if (Object.keys(newErrors).length === 0) {
       try {
-        // Envoi des données au backend
         const response = await axios.post('https://localhost:7141/api/login', formData);
-        setApiResponse(response.data.message);
+        const message = response.data?.message || 'Connexion réussie';
+        setApiResponse(message);
 
-        if (response.data.success) {
-          console.log('Connexion réussie :', response.data);
-
-          // **NOUVEL AJOUT : Redirection en fonction du rôle**
-          if (response.data.role === 'Admin') {
-            navigate('/admin'); // Redirige vers la page Admin
-          } else if (response.data.role === 'Receptionist') {
-            navigate('/Receptionist'); // Redirige vers la page Réception
-          } else if (response.data.role === 'Personnel De Menage') {
-            navigate('/PersonnelDeMenage'); // Redirige vers une page Manager
+        if (response.data?.success) {
+          const role = response.data?.role;
+          switch (role) {
+            case 'Admin':
+              navigate('/admin');
+              break;
+            case 'Receptionist':
+              navigate('/Receptionist');
+              break;
+            case 'Personnel De Menage':
+              navigate('/PersonnelDeMenage');
+              break;
+            default:
+              setApiResponse('Rôle non reconnu');
           }
         }
       } catch (error) {
-        if (error.response) {
-          setApiResponse(error.response.data.message || 'Erreur de connexion.');
-          console.error('Erreur API :', error.response.data);
-        } else {
-          setApiResponse('Erreur de connexion au serveur.');
-          console.error('Erreur réseau :', error.message);
-        }
+        const errorMessage = error.response?.data?.message || 'Erreur de connexion au serveur';
+        setApiResponse(errorMessage);
       }
     }
   };
 
-  const backgroundStyle = {
-    backgroundImage: "url('/images/image.jpg')",
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-    height: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  };
-
   return (
-    <div style={backgroundStyle}>
-      <div className="login-container">
-        <h2 className="text-center">Connexion</h2>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center bg-cover bg-center" style={{backgroundImage: "url('/images/image.jpg')"}}>
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h2 className="text-2xl font-bold text-center mb-6">Connexion</h2>
 
         {apiResponse && (
-          <div className={`alert ${errors.email || errors.password || errors.role ? 'alert-danger' : 'alert-success'}`}>
+          <div className={`p-4 mb-4 rounded ${errors.email || errors.password || errors.role ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
             {apiResponse}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label">Email</label>
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
               id="email"
               name="email"
-              className="form-control"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               value={formData.email}
               onChange={handleChange}
             />
-            {errors.email && <span className="text-danger">{errors.email}</span>}
+            {errors.email && <span className="text-sm text-red-600">{errors.email}</span>}
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label">Mot de Passe</label>
+          <div className="mb-4">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Mot de Passe</label>
             <input
               type="password"
               id="password"
               name="password"
-              className="form-control"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               value={formData.password}
               onChange={handleChange}
             />
-            {errors.password && <span className="text-danger">{errors.password}</span>}
+            {errors.password && <span className="text-sm text-red-600">{errors.password}</span>}
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="role" className="form-label">Sélectionnez un rôle</label>
+          <div className="mb-6">
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700">Sélectionnez un rôle</label>
             <select
-  id="role"
-  name="role"
-  className="form-control"
-  value={formData.role}
-  onChange={handleChange}
->
-  <option value="" disabled>Sélectionnez votre rôle</option>
-  {roles.map((role, index) => (
-    <option key={index} value={role}>{role}</option>
-  ))}
-</select>
-            {errors.role && <span className="text-danger">{errors.role}</span>}
+              id="role"
+              name="role"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              value={formData.role}
+              onChange={handleChange}
+            >
+              <option value="" disabled>Sélectionnez votre rôle</option>
+              {roles.map((role, index) => (
+                <option key={index} value={role}>{role}</option>
+              ))}
+            </select>
+            {errors.role && <span className="text-sm text-red-600">{errors.role}</span>}
           </div>
 
-          <button type="submit" className="btn btn-primary w-100">S'authentifier</button>
+          <button 
+            type="submit" 
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            S'authentifier
+          </button>
         </form>
       </div>
     </div>
