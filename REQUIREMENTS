@@ -1,0 +1,62 @@
+# Requirements for Pulling the Repository
+
+To successfully pull and run the `hotelapp` repository, ensure the following prerequisites are met:
+
+## Prerequisites
+
+1. **Git Installed:** Ensure Git is installed on your system.
+   - [Download Git](https://git-scm.com/)
+2. **Node.js Installed:** Ensure Node.js (v18.x or higher) is installed along with npm.
+   - [Download Node.js](https://nodejs.org/)
+3. **Code Editor:** (Optional) Recommended to use Visual Studio Code.
+   - [Download VS Code](https://code.visualstudio.com/)
+
+## Steps to Pull and Set Up the Repository
+
+1. **Clone the Repository:**
+
+  
+   git clone <repository-url>
+  
+
+2. **Navigate to the Project Directory:**
+
+  
+   cd hotelapp
+ 
+
+3. **Install Dependencies:**
+
+  
+   npm install
+   
+
+4. **Run the Application:**
+
+ 
+   npm start
+
+
+## Important Dependencies Installed:
+
+- React (`react`, `react-dom`)
+- React Router (`react-router-dom`)
+- Supabase (`@supabase/supabase-js`)
+- Axios (`axios`)
+- Tailwind CSS (`tailwindcss`, `postcss`, `autoprefixer`)
+- SweetAlert2 (`sweetalert2`)
+- Font Awesome (`@fortawesome/fontawesome-free`)
+- Testing Tools (`@testing-library/*`)
+
+## Development Tools and Configurations:
+
+- **React Scripts:** Used for running and building the project.
+- **Tailwind CSS:** Installed and configured for styling.
+- **ESLint Config:** Standard React App and Jest configurations.
+
+## Additional Steps (if required):
+
+- If you need to modify Babel settings, check the `devDependencies`.
+
+
+
