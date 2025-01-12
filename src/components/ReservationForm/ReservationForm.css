@@ -1,0 +1,23 @@
+.reservation-form {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.form-control, .form-select {
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 0.5rem;
+}
+
+.form-label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.btn {
+  padding: 0.5rem 2rem;
+  border-radius: 4px;
+  font-weight: 500;
+} 
