@@ -24,6 +24,7 @@ function ReservationForm() {
     // Formatage des données pour correspondre exactement au modèle C#
     const dataToSend = {
       ...formData,
+      Nom: (formData.Nom),
       DateCheckIn: `${formData.DateCheckIn}T00:00:00`,
       DateCheckOut: `${formData.DateCheckOut}T00:00:00`,
       NombreAdults: Number(formData.NombreAdults),

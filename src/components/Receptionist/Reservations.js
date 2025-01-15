@@ -8,16 +8,22 @@ export default function Reservations() {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
 
+  const typesChambres = {
+    1: "Simple",
+    2: "Double",
+    3: "Suite",
+  };
+
   // Récupérer les réservations depuis l'API
   useEffect(() => {
     const fetchReservations = async () => {
       try {
         const response = await fetch('https://localhost:7141/api/reservations');
         if (!response.ok) {
-          throw new Error('Erreur lors de la récupération des réservations');
+          const errorText = await response.text(); // Lire la réponse comme texte
+          throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
         }
         const data = await response.json();
-        console.log('Données reçues de l\'API :', data); // Inspecter les données
         setReservations(data);
         setLoading(false);
       } catch (error) {
@@ -79,7 +85,7 @@ export default function Reservations() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch('/Reservations/DeleteSelected', {
+          const response = await fetch('https://localhost:7141/api/reservations/deleteselected', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -95,11 +101,12 @@ export default function Reservations() {
             setSelectedIds([]); // Réinitialiser les sélections
             Swal.fire('Supprimé !', 'Les réservations sélectionnées ont été supprimées.', 'success');
           } else {
-            throw new Error('Erreur lors de la suppression');
+            const errorText = await response.text(); // Lire la réponse comme texte
+            throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
           }
         } catch (error) {
           console.error('Erreur:', error);
-          Swal.fire('Erreur !', 'Une erreur s\'est produite lors de la suppression.', 'error');
+          Swal.fire('Erreur !', error.message || 'Une erreur s\'est produite lors de la suppression.', 'error');
         }
       }
     });
@@ -112,31 +119,37 @@ export default function Reservations() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
         },
-        body: JSON.stringify(id)
+        body: JSON.stringify(id),
       });
-
+  
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'annulation de la réservation');
+        // Lire la réponse JSON en cas d'erreur
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erreur lors de l\'annulation de la réservation');
       }
-
+  
       // Mettre à jour la liste des réservations après l'annulation
-      setReservations(reservations.filter(reservation => reservation.id !== id));
-
+      setReservations((prevReservations) =>
+        prevReservations.map((reservation) =>
+          reservation.id === id ? { ...reservation, statut: "Annulée" } : reservation
+        )
+      );
+  
       Swal.fire({
         title: 'Succès!',
         text: 'La réservation a été annulée avec succès.',
         icon: 'success',
-        confirmButtonColor: '#8CD4B9'
+        confirmButtonColor: '#8CD4B9',
       });
     } catch (error) {
       console.error('Erreur:', error);
       Swal.fire({
         title: 'Erreur!',
-        text: 'Impossible d\'annuler la réservation. Veuillez réessayer plus tard.',
+        text: error.message, // Afficher le message d'erreur spécifique
         icon: 'error',
-        confirmButtonColor: '#F8B1A5'
+        confirmButtonColor: '#F8B1A5',
       });
     }
   };
@@ -172,19 +185,9 @@ export default function Reservations() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="w-12 px-3 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length === reservations.length}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedIds(reservations.map((reservation) => reservation.id));
-                      } else {
-                        setSelectedIds([]);
-                      }
-                    }}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
+                <th className="w-12 px-3 py-3 text-left"></th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Numéro de Réservation
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nom
@@ -193,15 +196,18 @@ export default function Reservations() {
                   Prénom
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date de Réservation
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date d'Arrivée
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date de Départ
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type de Chambre
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Statut
+                </th>
+                <th className="px-11 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -217,20 +223,26 @@ export default function Reservations() {
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {reservation.nomClient || reservation.client?.nom}
+                  <td className="px-9 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {reservation.id}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {reservation.prenomClient || reservation.client?.prenom}
+                    {reservation.nom}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(reservation.dateReservation).toLocaleDateString()}
+                    {reservation.prenom}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(reservation.dateCheckIn).toLocaleDateString()}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(reservation.dateCheckOut).toLocaleDateString()}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {typesChambres[reservation.id_Type_Chambre] || "Inconnu"}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {reservation.statut}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm">
                     <button
