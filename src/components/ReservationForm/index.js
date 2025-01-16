@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+/* import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { reservationService } from '../../services/api';
 import Swal from 'sweetalert2';
@@ -119,7 +119,7 @@ function ReservationForm() {
             type="submit"
             className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
           >
-            Créer la réservation
+            
           </button>
         </div>
       </form>
@@ -127,4 +127,4 @@ function ReservationForm() {
   );
 }
 
-export default ReservationForm;
+//export default ReservationForm; */

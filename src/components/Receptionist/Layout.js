@@ -39,9 +39,10 @@ export default function Layout({ children }) {
               </Link>
             </div>
             <div className="flex items-center gap-2">
-              <Link to="/create-reservation" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              <Link to="/reservations/create-form" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Create a Reservation
               </Link>
+              
               <Link to="/check-in" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Client Check-in
               </Link>
