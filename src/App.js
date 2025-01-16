@@ -7,6 +7,7 @@ import CreateUserPage from './components/Admin/CreateUser';
 import PersonnelDeMenageUI from './components/PersonnelDeMenage/PersonnelDeMenageUI';
 import Layout from './components/Receptionist/Layout';
 import Reservations from './components/Receptionist/Reservations';
+import Chambre from './components/Chambres/Chambre';
 import './App.css';
 
 function App() {
@@ -20,8 +21,11 @@ function App() {
         <Route path="/reservations/create" element={<ReservationForm />} />
         <Route path="/Receptionist" element={<Layout />} />
         <Route path="/Receptionist/reservations" element={<Layout> <Reservations/></Layout>} />
+        <Route path="/chambres" element={<Layout> <Chambre /></Layout>} />
         <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
         <Route path="/reservations/create-form" element={<Layout> <ReservationForm /></Layout>} />
+
+        
       </Routes>
     </Router>
   );
