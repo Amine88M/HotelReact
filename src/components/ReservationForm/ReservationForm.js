@@ -17,6 +17,8 @@ function ReservationForm() {
     Telephone: '',
     PrixTotal: 0,
     Statut: 'reserved',
+    ModePaiement: '',
+    email: '',
   });
 
   // Récupérer les types de chambre depuis l'API
@@ -175,169 +177,457 @@ function ReservationForm() {
     });
   };
 
+  const handlePrintFacture = () => {
+    const facture = `
+      FACTURE DE RÉSERVATION
+      ----------------------
+      
+      Informations Client:
+      Nom: ${formData.Nom}
+      Prénom: ${formData.Prenom}
+      Téléphone: ${formData.Telephone}
+      
+      Détails du Séjour:
+      Date d'arrivée: ${formData.DateCheckIn}
+      Date de départ: ${formData.DateCheckOut}
+      Nombre d'adultes: ${formData.NombreAdults}
+      Nombre d'enfants: ${formData.NombreEnfants}
+      
+      Type de chambre: ${typeChambres.find(tc => tc.id_Type_Chambre === parseInt(formData.id_Type_Chambre))?.nom_Type_Chambre || ''}
+      
+      Mode de paiement: ${formData.ModePaiement}
+      
+      Prix Total: $${formData.PrixTotal.toFixed(2)}
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Facture de Réservation</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              line-height: 1.6;
+            }
+            .facture {
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+              border: 1px solid #ccc;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 2px solid #8CD4B9;
+            }
+            .content {
+              margin-bottom: 30px;
+            }
+            .section {
+              margin-bottom: 20px;
+            }
+            .total {
+              font-size: 1.2em;
+              font-weight: bold;
+              text-align: right;
+              padding-top: 20px;
+              border-top: 2px solid #8CD4B9;
+            }
+            @media print {
+              body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="facture">
+            <div class="header">
+              <h1>Facture de Réservation</h1>
+              <p>Date: ${new Date().toLocaleDateString()}</p>
+            </div>
+            <div class="content">
+              <div class="section">
+                <h3>Informations Client</h3>
+                <p>Nom: ${formData.Nom}</p>
+                <p>Prénom: ${formData.Prenom}</p>
+                <p>Téléphone: ${formData.Telephone}</p>
+              </div>
+              <div class="section">
+                <h3>Détails du Séjour</h3>
+                <p>Date d'arrivée: ${formData.DateCheckIn}</p>
+                <p>Date de départ: ${formData.DateCheckOut}</p>
+                <p>Nombre d'adultes: ${formData.NombreAdults}</p>
+                <p>Nombre d'enfants: ${formData.NombreEnfants}</p>
+                <p>Type de chambre: ${typeChambres.find(tc => tc.id_Type_Chambre === parseInt(formData.id_Type_Chambre))?.nom_Type_Chambre || ''}</p>
+              </div>
+              <div class="section">
+                <h3>Paiement</h3>
+                <p>Mode de paiement: ${formData.ModePaiement}</p>
+              </div>
+            </div>
+            <div class="total">
+              Prix Total: $${formData.PrixTotal.toFixed(2)}
+            </div>
+          </div>
+          <script>
+            window.onload = () => {
+              window.print();
+              window.onafterprint = () => window.close();
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handleSendPaymentLink = async () => {
+    if (!formData.email) {
+      Swal.fire({
+        title: 'Erreur!',
+        text: 'Veuillez saisir une adresse email valide',
+        icon: 'error',
+        confirmButtonColor: '#F8B1A5'
+      });
+      return;
+    }
+
+    try {
+      // Simuler l'envoi d'un email (à remplacer par votre API d'envoi d'email)
+      await Swal.fire({
+        title: 'Envoi en cours...',
+        text: 'Envoi du lien de paiement',
+        icon: 'info',
+        showConfirmButton: false,
+        allowOutsideClick: false
+      });
+
+      // Simuler un délai d'envoi
+      setTimeout(() => {
+        Swal.fire({
+          title: 'Succès!',
+          text: `Le lien de paiement a été envoyé à ${formData.email}`,
+          icon: 'success',
+          confirmButtonColor: '#8CD4B9'
+        });
+      }, 1500);
+    } catch (error) {
+      Swal.fire({
+        title: 'Erreur!',
+        text: 'Erreur lors de l\'envoi du lien de paiement',
+        icon: 'error',
+        confirmButtonColor: '#F8B1A5'
+      });
+    }
+  };
+
   return (
-    <div className="container mt-4">
-      <h2 className="text-primary mb-4">Créer une Réservation</h2>
+    <div className="panel-container">
+      <div className="panel-content">
+        <div className="panel-header">
+          <h2 className="panel-title">
+            <i className="fas fa-calendar-check me-2"></i>
+            Créer une Réservation
+          </h2>
+        </div>
 
-      <form onSubmit={handleSubmit} className="reservation-form">
-        <div className="row border p-4">
-          <div className="col-md-6">
-            <div className="mb-3">
-              <label className="form-label">Type de Chambre</label>
-              <select
-                className="form-select"
-                name="id_Type_Chambre"
-                value={formData.id_Type_Chambre}
-                onChange={handleChange}
-                required
+        <div className="reservation-form-container">
+          <form onSubmit={handleSubmit} className="reservation-form">
+            <div className="form-grid">
+              {/* Colonne gauche */}
+              <div className="form-section">
+                <div className="section-content">
+                  <h4 className="section-title">
+                    <i className="fas fa-bed me-2"></i>
+                    Détails du Séjour
+                  </h4>
+
+                  <div className="form-group">
+                    <label className="form-label">Type de Chambre</label>
+                    <select
+                      className="form-select"
+                      name="id_Type_Chambre"
+                      value={formData.id_Type_Chambre}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Sélectionnez un type de chambre</option>
+                      {typeChambres.map(tc => (
+                        <option key={tc.id_Type_Chambre} value={tc.id_Type_Chambre}>
+                          {tc.nom_Type_Chambre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Date d'Arrivée</label>
+                      <div className="input-group">
+                        <span className="input-group-text">
+                          <i className="fas fa-calendar-alt"></i>
+                        </span>
+                        <input
+                          type="date"
+                          className="form-control"
+                          name="DateCheckIn"
+                          value={formData.DateCheckIn}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Date de Départ</label>
+                      <div className="input-group">
+                        <span className="input-group-text">
+                          <i className="fas fa-calendar-alt"></i>
+                        </span>
+                        <input
+                          type="date"
+                          className="form-control"
+                          name="DateCheckOut"
+                          value={formData.DateCheckOut}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Colonne droite */}
+              <div className="form-section">
+                <div className="section-content">
+                  <h4 className="section-title">
+                    <i className="fas fa-user me-2"></i>
+                    Informations Client
+                  </h4>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Nom</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="Nom"
+                        value={formData.Nom}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Prénom</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="Prenom"
+                        value={formData.Prenom}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Téléphone</label>
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <i className="fas fa-phone"></i>
+                      </span>
+                      <input
+                        type="tel"
+                        className="form-control"
+                        name="Telephone"
+                        value={formData.Telephone}
+                        onChange={handleChange}
+                        pattern="^\d{10}$"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Adultes</label>
+                      <div className="input-group">
+                        <span className="input-group-text">
+                          <i className="fas fa-user"></i>
+                        </span>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="NombreAdults"
+                          value={formData.NombreAdults}
+                          onChange={handleChange}
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Enfants</label>
+                      <div className="input-group">
+                        <span className="input-group-text">
+                          <i className="fas fa-child"></i>
+                        </span>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="NombreEnfants"
+                          value={formData.NombreEnfants}
+                          onChange={handleChange}
+                          min="0"
+                          max="10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Nouvelle section Mode de Paiement */}
+            <div className="payment-section">
+              <div className="section-content">
+                <h4 className="section-title">
+                  <i className="fas fa-credit-card me-2"></i>
+                  Mode de Paiement
+                </h4>
+                <div className="payment-options">
+                  <div className="payment-option">
+                    <input
+                      type="radio"
+                      id="carte"
+                      name="ModePaiement"
+                      value="carte"
+                      checked={formData.ModePaiement === 'carte'}
+                      onChange={handleChange}
+                    />
+                    <label htmlFor="carte">
+                      <i className="far fa-credit-card"></i>
+                      Carte Bancaire
+                    </label>
+                  </div>
+
+                  <div className="payment-option">
+                    <input
+                      type="radio"
+                      id="especes"
+                      name="ModePaiement"
+                      value="especes"
+                      checked={formData.ModePaiement === 'especes'}
+                      onChange={handleChange}
+                    />
+                    <label htmlFor="especes">
+                      <i className="fas fa-money-bill-wave"></i>
+                      Espèces
+                    </label>
+                  </div>
+
+                  <div className="payment-option">
+                    <input
+                      type="radio"
+                      id="cheque"
+                      name="ModePaiement"
+                      value="cheque"
+                      checked={formData.ModePaiement === 'cheque'}
+                      onChange={handleChange}
+                    />
+                    <label htmlFor="cheque">
+                      <i className="fas fa-money-check"></i>
+                      Chèque
+                    </label>
+                  </div>
+
+                  <div className="payment-option payment-option-link">
+                    <input
+                      type="radio"
+                      id="lien_paiement"
+                      name="ModePaiement"
+                      value="lien_paiement"
+                      checked={formData.ModePaiement === 'lien_paiement'}
+                      onChange={handleChange}
+                    />
+                    <label htmlFor="lien_paiement">
+                      <i className="fas fa-link"></i>
+                      Lien de Paiement
+                    </label>
+                  </div>
+                </div>
+
+                {/* Champ email conditionnel */}
+                {formData.ModePaiement === 'lien_paiement' && (
+                  <div className="payment-link-section">
+                    <div className="email-input-group">
+                      <input
+                        type="email"
+                        className="form-control"
+                        placeholder="Email du client"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleSendPaymentLink}
+                      >
+                        <i className="fas fa-paper-plane me-2"></i>
+                        Envoyer le lien
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Prix Total */}
+            <div className="total-price-section">
+              <div className="price-container">
+                <h4 className="price-label">Prix Total</h4>
+                <div className="price-value">
+                  <span className="currency">$</span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={formData.PrixTotal.toFixed(2)}
+                    readOnly
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Boutons */}
+            <div className="form-actions">
+              <button
+                type="submit"
+                className="btn btn-success"
               >
-                <option value="">Sélectionnez un type de chambre</option>
-                {typeChambres.map((tc) => (
-                  <option key={tc.id_Type_Chambre} value={tc.id_Type_Chambre}>
-                    {tc.nom_Type_Chambre}
-                  </option>
-                ))}
-              </select>
+                <i className="fas fa-check me-2"></i>
+                Créer Réservation
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => navigate('/Receptionist/reservations')}
+              >
+                <i className="fas fa-times me-2"></i>
+                Annuler
+              </button>
             </div>
-
-            <div className="mb-3">
-              <label className="form-label">Date d'Arrivée (Check-In)</label>
-              <input
-                type="date"
-                className="form-control"
-                name="DateCheckIn"
-                value={formData.DateCheckIn}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Date de Départ (Check-Out)</label>
-              <input
-                type="date"
-                className="form-control"
-                name="DateCheckOut"
-                value={formData.DateCheckOut}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Numéro de Téléphone</label>
-              <div className="input-group">
-                <span className="input-group-text">
-                  <i className="fas fa-phone"></i>
-                </span>
-                <input
-                  type="tel"
-                  className="form-control"
-                  name="Telephone"
-                  value={formData.Telephone}
-                  onChange={handleChange}
-                  pattern="^\d{10}$"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="col-md-6">
-            <div className="mb-3">
-              <label className="form-label">Nom</label>
-              <input
-                type="text"
-                className="form-control"
-                name="Nom"
-                value={formData.Nom}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Prénom</label>
-              <input
-                type="text"
-                className="form-control"
-                name="Prenom"
-                value={formData.Prenom}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Nombre d'Adultes</label>
-              <div className="input-group">
-                <span className="input-group-text">
-                  <i className="fas fa-user"></i>
-                </span>
-                <input
-                  type="number"
-                  className="form-control"
-                  name="NombreAdults"
-                  value={formData.NombreAdults}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Nombre d'Enfants</label>
-              <div className="input-group">
-                <span className="input-group-text">
-                  <i className="fas fa-child"></i>
-                </span>
-                <input
-                  type="number"
-                  className="form-control"
-                  name="NombreEnfants"
-                  value={formData.NombreEnfants}
-                  onChange={handleChange}
-                  min="0"
-                  max="10"
-                />
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Prix Total</label>
-              <div className="input-group">
-                <span className="input-group-text">$</span>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.PrixTotal.toFixed(2)}
-                  readOnly
-                  style={{ backgroundColor: '#f8f9fa' }}
-                />
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
-
-        <div className="d-flex justify-content-center gap-3 mt-4">
-          <button
-            type="submit"
-            className="btn"
-            style={{ backgroundColor: '#8CD4B9', color: 'white' }}
-          >
-            Créer Réservation
-          </button>
-          <button
-            type="button"
-            className="btn"
-            style={{ backgroundColor: '#F8B1A5', color: 'white' }}
-            onClick={() => navigate('/Receptionist/reservations')}
-          >
-            Retour à la Liste
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }
