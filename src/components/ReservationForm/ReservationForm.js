@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import './ReservationForm.css';
+import emailjs from '@emailjs/browser';
+
+const EMAILJS_PUBLIC_KEY = "wAIqQoExHXPkW93qN";
+const EMAILJS_SERVICE_ID = "service_b0qbdop";
+const EMAILJS_TEMPLATE_ID = "template_bnzuc7h";
 
 function ReservationForm() {
   const navigate = useNavigate();
@@ -72,9 +77,55 @@ function ReservationForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
+    // Vérifier que le mode de paiement est sélectionné
+    if (!formData.ModePaiement) {
+      Swal.fire({
+        title: 'Erreur!',
+        text: 'Veuillez sélectionner un mode de paiement.',
+        icon: 'error',
+        confirmButtonColor: '#F8B1A5',
+      });
+      return;
+    }
+  
+    // Vérifier les limites d'adultes et d'enfants pour le type de chambre sélectionné
+    const typeChambreSelectionne = typeChambres.find(tc => tc.id_Type_Chambre === parseInt(formData.id_Type_Chambre));
+    
+    if (typeChambreSelectionne) {
+      // Vérification du nombre d'adultes
+      if (parseInt(formData.NombreAdults) > typeChambreSelectionne.nbrAdulteMax) {
+        Swal.fire({
+          title: 'Erreur!',
+          text: `Ce type de chambre ne peut accueillir que ${typeChambreSelectionne.nbrAdulteMax} adultes maximum.`,
+          icon: 'error',
+          confirmButtonColor: '#F8B1A5',
+        });
+        return;
+      }
+
+      // Vérification du nombre d'enfants avec message personnalisé
+      if (typeChambreSelectionne.nbrEnfantMax === 0 && parseInt(formData.NombreEnfants) > 0) {
+        Swal.fire({
+          title: 'Erreur!',
+          text: 'Ce type de chambre ne peut pas accueillir d\'enfants.',
+          icon: 'error',
+          confirmButtonColor: '#F8B1A5',
+        });
+        return;
+      } else if (parseInt(formData.NombreEnfants) > typeChambreSelectionne.nbrEnfantMax) {
+        Swal.fire({
+          title: 'Erreur!',
+          text: `Ce type de chambre ne peut accueillir que ${typeChambreSelectionne.nbrEnfantMax} enfants maximum.`,
+          icon: 'error',
+          confirmButtonColor: '#F8B1A5',
+        });
+        return;
+      }
+    }
+
     // Convertir les dates en objets Date pour une comparaison correcte
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Ignorer l'heure
+    today.setHours(0, 0, 0, 0);
   
     const dateCheckIn = new Date(formData.DateCheckIn);
     dateCheckIn.setHours(0, 0, 0, 0); // Ignorer l'heure
@@ -164,7 +215,41 @@ function ReservationForm() {
         [name]: value
       };
       
-      // Recalculer le prix total si les champs pertinents changent
+      // Vérification en temps réel pour le nombre de personnes
+      if (['NombreAdults', 'NombreEnfants', 'id_Type_Chambre'].includes(name)) {
+        const typeChambreSelectionne = typeChambres.find(tc => tc.id_Type_Chambre === parseInt(newData.id_Type_Chambre));
+        
+        if (typeChambreSelectionne) {
+          // Vérification du nombre d'adultes
+          if (parseInt(newData.NombreAdults) > typeChambreSelectionne.nbrAdulteMax) {
+            Swal.fire({
+              title: 'Attention!',
+              text: `Ce type de chambre ne peut accueillir que ${typeChambreSelectionne.nbrAdulteMax} adultes maximum.`,
+              icon: 'warning',
+              confirmButtonColor: '#F8B1A5',
+            });
+          }
+          
+          // Vérification du nombre d'enfants avec message personnalisé
+          if (typeChambreSelectionne.nbrEnfantMax === 0 && parseInt(newData.NombreEnfants) > 0) {
+            Swal.fire({
+              title: 'Attention!',
+              text: 'Ce type de chambre ne peut pas accueillir d\'enfants.',
+              icon: 'warning',
+              confirmButtonColor: '#F8B1A5',
+            });
+          } else if (parseInt(newData.NombreEnfants) > typeChambreSelectionne.nbrEnfantMax) {
+            Swal.fire({
+              title: 'Attention!',
+              text: `Ce type de chambre ne peut accueillir que ${typeChambreSelectionne.nbrEnfantMax} enfants maximum.`,
+              icon: 'warning',
+              confirmButtonColor: '#F8B1A5',
+            });
+          }
+        }
+      }
+      
+      // Recalculer le prix total si nécessaire
       if (['id_Type_Chambre', 'DateCheckIn', 'DateCheckOut'].includes(name)) {
         const prixTotal = calculerPrixTotal();
         return {
@@ -178,28 +263,21 @@ function ReservationForm() {
   };
 
   const handlePrintFacture = () => {
-    const facture = `
-      FACTURE DE RÉSERVATION
-      ----------------------
-      
-      Informations Client:
-      Nom: ${formData.Nom}
-      Prénom: ${formData.Prenom}
-      Téléphone: ${formData.Telephone}
-      
-      Détails du Séjour:
-      Date d'arrivée: ${formData.DateCheckIn}
-      Date de départ: ${formData.DateCheckOut}
-      Nombre d'adultes: ${formData.NombreAdults}
-      Nombre d'enfants: ${formData.NombreEnfants}
-      
-      Type de chambre: ${typeChambres.find(tc => tc.id_Type_Chambre === parseInt(formData.id_Type_Chambre))?.nom_Type_Chambre || ''}
-      
-      Mode de paiement: ${formData.ModePaiement}
-      
-      Prix Total: $${formData.PrixTotal.toFixed(2)}
-    `;
+    // Vérification des champs obligatoires
+    if (!formData.Nom || !formData.Prenom || !formData.Telephone || 
+        !formData.DateCheckIn || !formData.DateCheckOut || 
+        !formData.id_Type_Chambre || !formData.NombreAdults || 
+        !formData.ModePaiement) {
+      Swal.fire({
+        title: 'Erreur!',
+        text: 'Veuillez remplir tous les champs obligatoires et sélectionner un mode de paiement avant d\'imprimer la facture.',
+        icon: 'error',
+        confirmButtonColor: '#F8B1A5'
+      });
+      return;
+    }
 
+    // Si toutes les validations sont passées, on procède à l'impression
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
@@ -221,7 +299,7 @@ function ReservationForm() {
               text-align: center;
               margin-bottom: 30px;
               padding-bottom: 20px;
-              border-bottom: 2px solid #8CD4B9;
+              border-bottom: 2px solid #3498db;
             }
             .content {
               margin-bottom: 30px;
@@ -234,13 +312,7 @@ function ReservationForm() {
               font-weight: bold;
               text-align: right;
               padding-top: 20px;
-              border-top: 2px solid #8CD4B9;
-            }
-            @media print {
-              body {
-                print-color-adjust: exact;
-                -webkit-print-color-adjust: exact;
-              }
+              border-top: 2px solid #3498db;
             }
           </style>
         </head>
@@ -258,11 +330,11 @@ function ReservationForm() {
                 <p>Téléphone: ${formData.Telephone}</p>
               </div>
               <div class="section">
-                <h3>Détails du Séjour</h3>
+                <h3>Détails Réservation </h3>
                 <p>Date d'arrivée: ${formData.DateCheckIn}</p>
                 <p>Date de départ: ${formData.DateCheckOut}</p>
                 <p>Nombre d'adultes: ${formData.NombreAdults}</p>
-                <p>Nombre d'enfants: ${formData.NombreEnfants}</p>
+                <p>Nombre d'enfants: ${formData.NombreEnfants || 0}</p>
                 <p>Type de chambre: ${typeChambres.find(tc => tc.id_Type_Chambre === parseInt(formData.id_Type_Chambre))?.nom_Type_Chambre || ''}</p>
               </div>
               <div class="section">
@@ -271,7 +343,7 @@ function ReservationForm() {
               </div>
             </div>
             <div class="total">
-              Prix Total: $${formData.PrixTotal.toFixed(2)}
+              Prix Total: ${formData.PrixTotal.toFixed(2)} €
             </div>
           </div>
           <script>
@@ -286,6 +358,14 @@ function ReservationForm() {
     printWindow.document.close();
   };
 
+  // Initialiser EmailJS (à mettre dans useEffect)
+  useEffect(() => {
+    emailjs.init({
+      publicKey: EMAILJS_PUBLIC_KEY,
+    });
+  }, []);
+
+  // Modifier la fonction handleSendPaymentLink
   const handleSendPaymentLink = async () => {
     if (!formData.email) {
       Swal.fire({
@@ -298,7 +378,6 @@ function ReservationForm() {
     }
 
     try {
-      // Simuler l'envoi d'un email (à remplacer par votre API d'envoi d'email)
       await Swal.fire({
         title: 'Envoi en cours...',
         text: 'Envoi du lien de paiement',
@@ -307,19 +386,59 @@ function ReservationForm() {
         allowOutsideClick: false
       });
 
-      // Simuler un délai d'envoi
-      setTimeout(() => {
-        Swal.fire({
-          title: 'Succès!',
-          text: `Le lien de paiement a été envoyé à ${formData.email}`,
-          icon: 'success',
-          confirmButtonColor: '#8CD4B9'
-        });
-      }, 1500);
+      const templateParams = {
+        to_email: formData.email,
+        to_name: `${formData.Prenom} ${formData.Nom}`,
+        from_name: "Hôtel Réservation",
+        subject: "Confirmation de réservation et lien de paiement - Hôtel",
+        message: `
+          Cher(e) ${formData.Prenom} ${formData.Nom},
+
+          Nous vous remercions pour votre réservation à notre hôtel.
+
+          Détails de votre réservation :
+          --------------------------------
+          - Date d'arrivée : ${formData.DateCheckIn}
+          - Date de départ : ${formData.DateCheckOut}
+          - Type de chambre : ${typeChambres.find(tc => tc.id_Type_Chambre === parseInt(formData.id_Type_Chambre))?.nom_Type_Chambre || ''}
+          - Montant total : ${formData.PrixTotal.toFixed(2)} €
+
+          Pour finaliser votre réservation, veuillez procéder au paiement en cliquant sur le lien ci-dessous :
+          ${formData.payment_link}
+
+          Si vous avez des questions, n'hésitez pas à nous contacter.
+
+          Cordialement,
+          L'équipe de l'Hôtel
+        `,
+        payment_link: "http:/khelesseni/paiement"
+      };
+
+      console.log('Email destiné à:', formData.email);
+      console.log('Template utilisé:', EMAILJS_TEMPLATE_ID);
+      console.log('Service utilisé:', EMAILJS_SERVICE_ID);
+
+      const response = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        templateParams
+      );
+
+      if (response.status === 200) {
+        console.log('Email envoyé avec succès à:', formData.email);
+      }
+
+      Swal.fire({
+        title: 'Succès!',
+        text: `Le lien de paiement a été envoyé à ${formData.email}`,
+        icon: 'success',
+        confirmButtonColor: '#8CD4B9'
+      });
     } catch (error) {
+      console.error('Erreur détaillée:', error);
       Swal.fire({
         title: 'Erreur!',
-        text: 'Erreur lors de l\'envoi du lien de paiement',
+        text: 'Erreur lors de l\'envoi de l\'email. Veuillez vérifier la configuration.',
         icon: 'error',
         confirmButtonColor: '#F8B1A5'
       });
@@ -512,6 +631,7 @@ function ReservationForm() {
                       value="carte"
                       checked={formData.ModePaiement === 'carte'}
                       onChange={handleChange}
+                      required
                     />
                     <label htmlFor="carte">
                       <i className="far fa-credit-card"></i>
@@ -527,6 +647,7 @@ function ReservationForm() {
                       value="especes"
                       checked={formData.ModePaiement === 'especes'}
                       onChange={handleChange}
+                      required
                     />
                     <label htmlFor="especes">
                       <i className="fas fa-money-bill-wave"></i>
@@ -542,6 +663,7 @@ function ReservationForm() {
                       value="cheque"
                       checked={formData.ModePaiement === 'cheque'}
                       onChange={handleChange}
+                      required
                     />
                     <label htmlFor="cheque">
                       <i className="fas fa-money-check"></i>
@@ -557,6 +679,7 @@ function ReservationForm() {
                       value="lien_paiement"
                       checked={formData.ModePaiement === 'lien_paiement'}
                       onChange={handleChange}
+                      required
                     />
                     <label htmlFor="lien_paiement">
                       <i className="fas fa-link"></i>
@@ -615,6 +738,15 @@ function ReservationForm() {
               >
                 <i className="fas fa-check me-2"></i>
                 Créer Réservation
+              </button>
+              <button
+                type="button"
+                className="btn btn-info"
+                onClick={handlePrintFacture}
+                style={{ backgroundColor: '#3498db', borderColor: '#3498db' }}
+              >
+                <i className="fas fa-print me-2"></i>
+                Imprimer Facture
               </button>
               <button
                 type="button"
