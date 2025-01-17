@@ -54,13 +54,12 @@ export default function CheckIn({ onNewCheckIn }) {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Guest Check-ins</h1>
         <div className="flex gap-4">
-          <button
-            onClick={handleNewCheckIn}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <UserPlus size={20} />
-            New Check-in
-          </button>
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+            <Receipt size={20} className="text-gray-500" />
+            <span className="text-gray-700 font-medium">
+              Total Checkins: {checkIns.length}
+            </span>
+          </div>
           {selectedIds.length > 0 && (
             <button
               onClick={handleDeleteSelected}

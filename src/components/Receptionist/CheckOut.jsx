@@ -154,7 +154,7 @@ export default function CheckOut() {
                       className="flex items-center gap-1 text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md transition-colors"
                     >
                       <Printer size={16} />
-                      Invoice
+                      Facture
                     </button>
                   </div>
                 </td>
