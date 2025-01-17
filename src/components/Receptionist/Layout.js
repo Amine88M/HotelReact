@@ -39,9 +39,10 @@ export default function Layout({ children }) {
               </Link>
             </div>
             <div className="flex items-center gap-2">
-              <Link to="/create-reservation" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              <Link to="/reservations/create-form" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Create a Reservation
               </Link>
+              
               <Link to="/check-in" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Client Check-in
               </Link>
@@ -110,7 +111,7 @@ export default function Layout({ children }) {
               </Link>
             </li>
             <li>
-              <Link to="/rooms" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <Link to="/chambres" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
                 <BedDouble className="w-5 h-5 text-gray-500" />
                 <span className="ml-3">Rooms</span>
               </Link>
