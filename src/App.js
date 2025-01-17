@@ -13,6 +13,7 @@ import  Dashboard  from './components/Receptionist/Dashboard';
 import  CheckIn  from './components/Receptionist/CheckIn';
 import  CheckOut  from './components/Receptionist/CheckOut';
 import ProtectedRoute from './components/ProtectedRoute';
+import CreateChambre from './components/Chambres/CreateChambre';
 
 import './App.css';
 
@@ -51,6 +52,7 @@ function App() {
           <Route path="reservations" element={<Reservations />} />
           <Route path="create-reservation" element={<ReservationForm />} />
           <Route path="chambres" element={ <Chambre />} />
+          <Route path="create-chambre" element={<CreateChambre />} />
         </Route>
       </Routes>
     </Router>
