@@ -1,79 +1,150 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
-  const [search, setSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortField, setSortField] = useState('nom');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [roleFilter, setRoleFilter] = useState('all');
 
+  // Charger les utilisateurs
   useEffect(() => {
-    axios
-      .get(`https://localhost:7141/api/admin/users?page=${currentPage}`)
-      .then((response) => {
-        console.log('Réponse de l\'API:', response.data);
-  
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get(`https://localhost:7141/api/admin/users?page=${currentPage}`);
+        let userData = [];
+        
         if (Array.isArray(response.data)) {
-          setUsers(response.data);
+          userData = response.data;
           setTotalPages(1);
         } else if (response.data.users) {
-          setUsers(response.data.users);
+          userData = response.data.users;
           setTotalPages(response.data.totalPages || 1);
-        } else {
-          console.error('La réponse de l\'API ne contient pas d\'utilisateurs.');
         }
-        setError('');
-      })
-      .catch((error) => {
+
+        // Tri par défaut par nom
+        const sortedData = userData.sort((a, b) => a.nom.localeCompare(b.nom));
+        setUsers(sortedData);
+      } catch (error) {
         console.error('Erreur lors du chargement des utilisateurs:', error);
         setError('Erreur lors du chargement des utilisateurs.');
-      });
+      }
+    };
+
+    fetchUsers();
   }, [currentPage]);
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
+  // Fonction de tri
+  const handleSort = (field) => {
+    const newDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortField(field);
+    setSortDirection(newDirection);
+
+    const sortedUsers = [...users].sort((a, b) => {
+      if (field === 'role') {
+        return newDirection === 'asc' 
+          ? a.role.localeCompare(b.role)
+          : b.role.localeCompare(a.role);
+      } else {
+        return newDirection === 'asc'
+          ? a[field].localeCompare(b[field])
+          : b[field].localeCompare(a[field]);
+      }
+    });
+    setUsers(sortedUsers);
   };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedUsers(users.map((user) => user.id));
-    } else {
-      setSelectedUsers([]);
-    }
-  };
-
+  // Supprimer les utilisateurs sélectionnés
   const handleDeleteSelected = async () => {
-    try {
-      await axios.delete('https://localhost:7141/api/admin/users', {
-        data: { ids: selectedUsers },
+    if (selectedUsers.length === 0) {
+      Swal.fire({
+        title: 'Aucune sélection',
+        text: 'Veuillez sélectionner au moins un utilisateur à supprimer.',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
       });
-      setUsers(users.filter((user) => !selectedUsers.includes(user.id)));
-      setSelectedUsers([]);
-    } catch (error) {
-      setError(
-        error.response?.data?.message || 'Erreur lors de la suppression des utilisateurs.'
-      );
-      console.error('Erreur lors de la suppression:', error);
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: 'Cette action supprimera les utilisateurs sélectionnés !',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Oui, supprimer !',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch('https://localhost:7141/api/admin/deleteselectedusers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify(selectedUsers)
+        });
+
+        if (response.ok) {
+          setUsers(prevUsers => prevUsers.filter(user => !selectedUsers.includes(user.id)));
+          setSelectedUsers([]);
+          Swal.fire('Supprimé !', 'Les utilisateurs sélectionnés ont été supprimés.', 'success');
+        } else {
+          const errorText = await response.text();
+          throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        Swal.fire('Erreur !', error.message || 'Une erreur s\'est produite lors de la suppression.', 'error');
+      }
     }
   };
+
+  // Filtrer les utilisateurs
+  const filteredUsers = users.filter(user => {
+    const searchMatch = user.nom?.toLowerCase().includes(search.toLowerCase()) ||
+                       user.prenom?.toLowerCase().includes(search.toLowerCase()) ||
+                       user.email?.toLowerCase().includes(search.toLowerCase());
+    const roleMatch = roleFilter === 'all' || user.role === roleFilter;
+    return searchMatch && roleMatch;
+  });
 
   return (
     <main className="p-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold mb-4">Liste des Utilisateurs</h1>
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-4 items-center mb-4">
           <input
             type="text"
             placeholder="Rechercher un utilisateur..."
             className="px-4 py-2 border rounded-lg flex-1"
             value={search}
-            onChange={handleSearchChange}
+            onChange={(e) => setSearch(e.target.value)}
           />
+          <select
+            className="px-4 py-2 border rounded-lg"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+          >
+            <option value="all">Tous les rôles</option>
+            <option value="Admin">Admin</option>
+            <option value="User">User</option>
+          </select>
           <button
-            className={`px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors
-              ${selectedUsers.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors ${
+              selectedUsers.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
             onClick={handleDeleteSelected}
             disabled={selectedUsers.length === 0}
           >
@@ -82,77 +153,66 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
-
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 border-b">
-                <input type="checkbox" onChange={handleSelectAll} className="rounded" />
+              <th className="w-12 px-6 py-3 border-b">
+                <input 
+                  type="checkbox"
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedUsers(users.map(user => user.id));
+                    } else {
+                      setSelectedUsers([]);
+                    }
+                  }}
+                  className="rounded"
+                />
               </th>
-              <th className="px-6 py-3 border-b text-left">Nom</th>
+              <th 
+                className="px-6 py-3 border-b text-left cursor-pointer"
+                onClick={() => handleSort('nom')}
+              >
+                Nom {sortField === 'nom' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </th>
+              <th className="px-6 py-3 border-b text-left">Prénom</th>
               <th className="px-6 py-3 border-b text-left">Email</th>
               <th className="px-6 py-3 border-b text-left">Rôle</th>
-              <th className="px-6 py-3 border-b text-left">Status</th>
               <th className="px-6 py-3 border-b text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.length > 0 ? (
-              users
-                .filter((user) =>
-                  user.nom?.toLowerCase().includes(search.toLowerCase())
-                )
-                .map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 border-b">
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(user.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedUsers([...selectedUsers, user.id]);
-                          } else {
-                            setSelectedUsers(
-                              selectedUsers.filter((id) => id !== user.id)
-                            );
-                          }
-                        }}
-                        className="rounded"
-                      />
-                    </td>
-                    <td className="px-6 py-4 border-b">{user.nom}</td>
-                    <td className="px-6 py-4 border-b">{user.email}</td>
-                    <td className="px-6 py-4 border-b">{user.role}</td>
-                    <td className="px-6 py-4 border-b">
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${
-                          user.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {user.status === 'active' ? 'Actif' : 'Inactif'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 border-b">
-                      <button
-                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                        onClick={() => console.log(`Modifier utilisateur ${user.id}`)}
-                      >
-                        Modifier
-                      </button>
-                    </td>
-                  </tr>
-                ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="px-6 py-4 text-center border-b">
-                  Aucun utilisateur trouvé.
+            {filteredUsers.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 border-b">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.includes(user.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedUsers([...selectedUsers, user.id]);
+                      } else {
+                        setSelectedUsers(selectedUsers.filter(id => id !== user.id));
+                      }
+                    }}
+                    className="rounded"
+                  />
+                </td>
+                <td className="px-6 py-4 border-b">{user.nom}</td>
+                <td className="px-6 py-4 border-b">{user.prenom}</td>
+                <td className="px-6 py-4 border-b">{user.email}</td>
+                <td className="px-6 py-4 border-b">{user.role}</td>
+                <td className="px-6 py-4 border-b">
+                  <button
+                    onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                    className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Modifier
+                  </button>
                 </td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>
@@ -160,12 +220,10 @@ const AdminDashboard = () => {
       <div className="flex items-center justify-center gap-4 mt-6">
         <button
           className={`px-4 py-2 rounded ${
-            currentPage === 1
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-200 hover:bg-gray-300 transition-colors'
+            currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 transition-colors'
           }`}
           disabled={currentPage === 1}
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
         >
           &#9664;
         </button>
@@ -174,12 +232,10 @@ const AdminDashboard = () => {
         </span>
         <button
           className={`px-4 py-2 rounded ${
-            currentPage === totalPages
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-200 hover:bg-gray-300 transition-colors'
+            currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 transition-colors'
           }`}
           disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
         >
           &#9654;
         </button>
