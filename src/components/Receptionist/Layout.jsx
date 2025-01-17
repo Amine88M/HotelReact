@@ -1,21 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  LogIn, 
-  LogOut, 
-  Menu, 
-  BedDouble,
-  UserCircle,
-  X,
-  Camera,
-  Key,
-  CalendarCheck
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { LayoutDashboard, LogIn, LogOut, Menu, BedDouble, UserCircle, X, Camera, Key, CalendarCheck ,Settings} from 'lucide-react';
+import { Link,Outlet} from 'react-router-dom';
+
+import  CheckInModal  from './CheckInModal';
+import  CheckOutModal  from './CheckOutModal';
+;
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
+  const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -39,17 +34,22 @@ export default function Layout({ children }) {
               </Link>
             </div>
             <div className="flex items-center gap-2">
-              <Link to="/reservations/create-form" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              <Link to="/Receptionist/create-reservation" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Create a Reservation
               </Link>
-              
-              <Link to="/check-in" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              <button
+                onClick={() => setIsCheckInModalOpen(true)}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
                 Client Check-in
-              </Link>
-              <Link to="/check-out" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              </button>
+              <button
+                onClick={() => setIsCheckOutModalOpen(true)}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
                 Client Check-out
-              </Link>
-              <Link to="/today-reservations" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              </button>
+              <Link to="/Receptionist/today-reservations" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Today's Reservations
               </Link>
               <div className="relative">
@@ -61,7 +61,7 @@ export default function Layout({ children }) {
                 </button>
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1">
-                                        <button
+                    <button
                       className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                       onClick={() => {/* Handle profile picture change */}}
                     >
@@ -75,8 +75,10 @@ export default function Layout({ children }) {
                       <Key size={16} />
                       Change Password
                     </button>
-                    <button className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left">
-                      Déconnexion
+                    <button >
+                    <Link to="/" className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left">
+                    Déconnexion
+                    </Link> 
                     </button>
                   </div>
                 )}
@@ -87,33 +89,39 @@ export default function Layout({ children }) {
       </nav>
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 z-40 w-52 h-screen pt-20 transition-transform ${
+      <aside className={`fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } bg-white border-r border-gray-200 lg:translate-x-0`}>
         <div className="h-full px-3 pb-4 overflow-y-auto">
           <ul className="space-y-2 font-medium">
             <li>
-              <Link to="/dashboard" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <Link to="/Receptionist/dashboard" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
                 <LayoutDashboard className="w-5 h-5 text-gray-500" />
                 <span className="ml-3">Dashboard</span>
               </Link>
             </li>
             <li>
-              <Link to="/check-in" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <Link to="/Receptionist/checkin" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
                 <LogIn className="w-5 h-5 text-gray-500" />
                 <span className="ml-3">Check-in</span>
               </Link>
             </li>
             <li>
-              <Link to="/check-out" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <Link to="/Receptionist/checkout" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
                 <LogOut className="w-5 h-5 text-gray-500" />
                 <span className="ml-3">Check-out</span>
               </Link>
             </li>
             <li>
-              <Link to="/chambres" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <Link to="/Receptionist/rooms" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
                 <BedDouble className="w-5 h-5 text-gray-500" />
                 <span className="ml-3">Rooms</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/services" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+                <Settings className="w-5 h-5 text-gray-500" /> {/* Icône pour "Services" */}
+                <span className="ml-3">Services</span>
               </Link>
             </li>
             <li>
@@ -126,10 +134,17 @@ export default function Layout({ children }) {
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className={`p-4 ${isSidebarOpen ? 'lg:ml-52' : ''} pt-20`}>
-        {children}
+
+      {/* Main content area where sub-routes (like CheckIn, CheckOut) will render */}
+      <div className={`p-4 ${isSidebarOpen ? 'lg:ml-64' : ''} pt-20`}>
+        <Outlet />
       </div>
+  
+
+      {/* Modals */}
+      <CheckInModal isOpen={isCheckInModalOpen} onClose={() => setIsCheckInModalOpen(false)} />
+      <CheckOutModal isOpen={isCheckOutModalOpen} onClose={() => setIsCheckOutModalOpen(false)} />
     </div>
   );
 }
+

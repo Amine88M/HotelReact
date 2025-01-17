@@ -1,31 +1,57 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ReceptionDashboard from './components/Reception/ReceptionDashboard';
 import ReservationForm from './components/ReservationForm/ReservationForm';
 import Login from './components/Login';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import CreateUserPage from './components/Admin/CreateUser';
 import PersonnelDeMenageUI from './components/PersonnelDeMenage/PersonnelDeMenageUI';
 import Layout from './components/Receptionist/Layout';
-import Reservations from './components/Receptionist/Reservations';
+import LayoutAdmin from './components/Admin/LayoutAdmin';
 import Chambre from './components/Chambres/Chambre';
+import Reservations from './components/Receptionist/Reservations';
+import  TodayReservations  from './components/Receptionist/TodayReservations';
+import  Dashboard  from './components/Receptionist/Dashboard';
+import  CheckIn  from './components/Receptionist/CheckIn';
+import  CheckOut  from './components/Receptionist/CheckOut';
+import ProtectedRoute from './components/ProtectedRoute';
+
 import './App.css';
 
 function App() {
+  const isAuthenticated = true; // Replace with your actual authentication logic
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/create-user" element={<CreateUserPage />} />
-        <Route path="/reception" element={<ReceptionDashboard />} />
-        <Route path="/reservations/create" element={<ReservationForm />} />
-        <Route path="/Receptionist" element={<Layout />} />
-        <Route path="/Receptionist/reservations" element={<Layout> <Reservations/></Layout>} />
-        <Route path="/chambres" element={<Layout> <Chambre /></Layout>} />
-        <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
-        <Route path="/reservations/create-form" element={<Layout> <ReservationForm /></Layout>} />
+        <Route path="/admin" element={<LayoutAdmin />}>
 
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<AdminDashboard />} />
+          <Route path="create-user" element={<CreateUserPage />} />
+          <Route path="roles" element={<div>Page des rôles</div>} />
+          <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         
+        </Route>
+        <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
+        
+        {/* Protected Receptionist Routes */}
+        <Route 
+          path="/Receptionist/*" 
+          element={
+            <ProtectedRoute
+              isAuthenticated={isAuthenticated}
+              element={<Layout />}
+            />
+          }
+        >
+          {/* Nested Routes for Receptionist */}
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="checkin" element={<CheckIn />} />
+          <Route path="checkout" element={<CheckOut />} />
+          <Route path="today-reservations" element={<TodayReservations />} />
+          <Route path="reservations" element={<Reservations />} />
+          <Route path="create-reservation" element={<ReservationForm />} />
+          <Route path="chambres" element={ <Chambre />} />
+        </Route>
       </Routes>
     </Router>
   );
