@@ -9,7 +9,8 @@ import {
   X,
   Camera,
   Key,
-  CalendarCheck
+  CalendarCheck,
+  Settings // Importez l'icône pour "Services"
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -61,7 +62,7 @@ export default function Layout({ children }) {
                 </button>
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1">
-                                        <button
+                    <button
                       className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                       onClick={() => {/* Handle profile picture change */}}
                     >
@@ -114,6 +115,12 @@ export default function Layout({ children }) {
               <Link to="/chambres" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
                 <BedDouble className="w-5 h-5 text-gray-500" />
                 <span className="ml-3">Rooms</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/services" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+                <Settings className="w-5 h-5 text-gray-500" /> {/* Icône pour "Services" */}
+                <span className="ml-3">Services</span>
               </Link>
             </li>
             <li>
