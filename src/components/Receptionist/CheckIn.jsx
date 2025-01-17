@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, UserPlus, Trash2 } from 'lucide-react';
+import { Search, Filter, ClipboardList, Trash2 } from 'lucide-react';
 
 
 export default function CheckIn({ onNewCheckIn }) {
@@ -55,7 +55,7 @@ export default function CheckIn({ onNewCheckIn }) {
         <h1 className="text-2xl font-bold text-gray-900">Guest Check-ins</h1>
         <div className="flex gap-4">
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-            <Receipt size={20} className="text-gray-500" />
+            <ClipboardList size={20} className="text-gray-500" />
             <span className="text-gray-700 font-medium">
               Total Checkins: {checkIns.length}
             </span>
