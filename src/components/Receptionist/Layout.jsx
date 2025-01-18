@@ -2,15 +2,10 @@ import React, { useState } from 'react';
 import { LayoutDashboard, LogIn, LogOut, Menu, BedDouble, UserCircle, X, Camera, Key, CalendarCheck ,Settings} from 'lucide-react';
 import { Link,Outlet} from 'react-router-dom';
 
-import  CheckInModal  from './CheckInModal';
-import  CheckOutModal  from './CheckOutModal';
-;
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
-  const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,18 +32,12 @@ export default function Layout({ children }) {
               <Link to="/Receptionist/create-reservation" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Create a Reservation
               </Link>
-              <button
-                onClick={() => setIsCheckInModalOpen(true)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
+              <Link to="/Receptionist/checkInModal" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Client Check-in
-              </button>
-              <button
-                onClick={() => setIsCheckOutModalOpen(true)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
+              </Link>
+              <Link to="/Receptionist/checkOutModal" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Client Check-out
-              </button>
+              </Link>
               <Link to="/Receptionist/today-reservations" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Today's Reservations
               </Link>
@@ -141,9 +130,7 @@ export default function Layout({ children }) {
       </div>
   
 
-      {/* Modals */}
-      <CheckInModal isOpen={isCheckInModalOpen} onClose={() => setIsCheckInModalOpen(false)} />
-      <CheckOutModal isOpen={isCheckOutModalOpen} onClose={() => setIsCheckOutModalOpen(false)} />
+      
     </div>
   );
 }

@@ -13,6 +13,8 @@ import  Dashboard  from './components/Receptionist/Dashboard';
 import  CheckIn  from './components/Receptionist/CheckIn';
 import  CheckOut  from './components/Receptionist/CheckOut';
 import ProtectedRoute from './components/ProtectedRoute';
+import CheckInModal from './components/Receptionist/CheckInModal';
+import CheckOutModal from './components/Receptionist/CheckOutModal';
 
 import './App.css';
 
@@ -51,6 +53,8 @@ function App() {
           <Route path="reservations" element={<Reservations />} />
           <Route path="create-reservation" element={<ReservationForm />} />
           <Route path="chambres" element={ <Chambre />} />
+          <Route path="checkInModal" element={<CheckInModal />} />
+          <Route path="checkOutModal" element={<CheckOutModal />} />
         </Route>
       </Routes>
     </Router>
