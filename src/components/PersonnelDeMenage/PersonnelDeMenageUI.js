@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, User, Camera, Key } from 'lucide-react';
-
+import { Link } from 'react-router-dom';
 const API_BASE_URL = 'https://localhost:7141';
 
 const PersonnelDeMenageUI = () => {
@@ -15,44 +15,37 @@ const PersonnelDeMenageUI = () => {
   };
 
   useEffect(() => {
-    fetchRooms();
+    fetchDirtyRooms();
   }, []);
 
-  const fetchRooms = async () => {
+  const fetchDirtyRooms = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/rooms/housekeeping`);
-      if (!response.ok) throw new Error('Failed to fetch rooms');
-      const data = await response.json();
-      setRooms(data);
+        const response = await fetch(`${API_BASE_URL}/api/chambre/dirty`);
+        if (!response.ok) throw new Error('Failed to fetch dirty rooms');
+        const data = await response.json();
+        console.log(data); // Add this line to check the data
+        setRooms(data);
     } catch (error) {
-      console.error('Error fetching rooms:', error);
+        console.error('Error fetching dirty rooms:', error);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
-
-  const handleStatusChange = async (roomId, newStatus) => {
+};
+  const handleStatusChange = async (roomId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/rooms/${roomId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/chambre/clean/${roomId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus })
       });
+      
       if (!response.ok) throw new Error('Failed to update room status');
-      setRooms(prevRooms =>
-        prevRooms.map(room =>
-          room.id === roomId ? { ...room, status: newStatus } : room
-        )
-      );
+      
+      // Remove the room from the list immediately after successful update
+      setRooms(prevRooms => prevRooms.filter(room => room.numChambre !== roomId));
     } catch (error) {
       console.error('Error updating room status:', error);
     }
     setOpenDropdown(null);
   };
-
-  const visibleRooms = rooms.filter(room => room.status !== "Clean");
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -88,9 +81,11 @@ const PersonnelDeMenageUI = () => {
                     <Key size={16} />
                     Change Password
                   </button>
+                  <Link to="/" >
                   <button className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left">
-                    Déconnexion
+                  Déconnexion
                   </button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -102,41 +97,32 @@ const PersonnelDeMenageUI = () => {
         <h2 className="text-xl font-semibold text-gray-800">Hello, {user.name}</h2>
         <p className="text-gray-500 mb-12">Have a nice day!</p>
 
-        <h3 className="text-2xl font-medium text-gray-700 mb-6">List of Hotel Rooms</h3>
+        <h3 className="text-2xl font-medium text-gray-700 mb-6">List of Dirty Hotel Rooms</h3>
         <div className="space-y-4">
-          {visibleRooms.map(room => (
-            <div key={room.id} className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
+          {rooms.map(room => (
+            <div key={room.numChambre} className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
               <div>
-                <h4 className="font-medium text-gray-800">{room.number}</h4>
-                <p className="text-gray-500 text-sm">{room.floor}</p>
+                <h4 className="font-medium text-gray-800">Room {room.numChambre}</h4>
+                  <p className="text-gray-500 text-sm">Type: {room.typeName}</p>
+                  {room.description && (
+                  <p className="text-gray-500 text-sm">{room.description}</p>
+                )}
               </div>
               <div className="relative">
                 <button 
-                  onClick={() => setOpenDropdown(openDropdown === room.id ? null : room.id)}
-                  className={`px-6 py-2 rounded-lg flex items-center space-x-1 text-white ${room.status === 'Dirty' ? 'bg-blue-500' : room.status === 'Cleaning' ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  onClick={() => setOpenDropdown(openDropdown === room.numChambre ? null : room.numChambre)}
+                  className="px-6 py-2 rounded-lg flex items-center space-x-1 text-white bg-yellow-500"
                 >
-                  <span>{room.status}</span>
+                  <span>Dirty</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
-                {openDropdown === room.id && (
+                {openDropdown === room.numChambre && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                     <button
-                      onClick={() => handleStatusChange(room.id, "Dirty")}
+                      onClick={() => handleStatusChange(room.numChambre)}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      Dirty
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(room.id, "Cleaning")}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Cleaning
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(room.id, "Clean")}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Clean
+                      Mark as Clean
                     </button>
                   </div>
                 )}
