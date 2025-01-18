@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const [sortField, setSortField] = useState('nom');
   const [sortDirection, setSortDirection] = useState('asc');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [roles, setRoles] = useState([]);
 
   // Charger les utilisateurs
   useEffect(() => {
@@ -41,6 +42,19 @@ const AdminDashboard = () => {
 
     fetchUsers();
   }, [currentPage]);
+
+  // Ajouter un useEffect pour charger les rôles depuis l'API
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await axios.get('https://localhost:7141/api/roles');
+        setRoles(response.data);
+      } catch (error) {
+        console.error('Erreur lors du chargement des rôles:', error);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   // Fonction de tri
   const handleSort = (field) => {
@@ -111,13 +125,24 @@ const AdminDashboard = () => {
     }
   };
 
-  // Filtrer les utilisateurs
-  const filteredUsers = users.filter(user => {
-    const searchMatch = user.nom?.toLowerCase().includes(search.toLowerCase()) ||
-                       user.prenom?.toLowerCase().includes(search.toLowerCase()) ||
-                       user.email?.toLowerCase().includes(search.toLowerCase());
-    const roleMatch = roleFilter === 'all' || user.role === roleFilter;
+  // Filtrer les utilisateurs en fonction du terme de recherche et du rôle
+  const filteredUsers = users.filter((user) => {
+    const searchMatch = 
+      user.userName?.toLowerCase().includes(search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(search.toLowerCase());
+    
+    const roleMatch = roleFilter === 'all' || 
+      user.role?.toLowerCase() === roleFilter.toLowerCase();
+    
     return searchMatch && roleMatch;
+  });
+
+  // Trier les utilisateurs filtrés
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (roleFilter) {
+      return a.role.toLowerCase().localeCompare(b.role.toLowerCase());
+    }
+    return a.userName.toLowerCase().localeCompare(b.userName.toLowerCase());
   });
 
   return (
@@ -138,8 +163,11 @@ const AdminDashboard = () => {
             onChange={(e) => setRoleFilter(e.target.value)}
           >
             <option value="all">Tous les rôles</option>
-            <option value="Admin">Admin</option>
-            <option value="User">User</option>
+            {roles.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
           </select>
           <button
             className={`px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors ${
@@ -183,7 +211,7 @@ const AdminDashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user) => (
+            {sortedUsers.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 border-b">
                   <input

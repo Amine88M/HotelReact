@@ -23,6 +23,8 @@ const CreateUser  = () => {
     lowercase: false,
   });
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const checkPassword = (password) => {
     setPasswordChecks({
@@ -60,6 +62,18 @@ const CreateUser  = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        setPreviewUrl(fileReader.result);
+      };
+      fileReader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError('');
@@ -70,10 +84,11 @@ const CreateUser  = () => {
     }
 
     try {
-      const response = await fetch('https://localhost:7141/api/admin/usersPost', {
+      // Première requête pour créer l'utilisateur
+      const userResponse = await fetch('https://localhost:7141/api/admin/usersPost', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           Nom: formData.nom,
@@ -84,13 +99,41 @@ const CreateUser  = () => {
           ConfirmPassword: formData.confirmPassword,
           Role: formData.role,
           Genre: formData.genre
-        }),
+        })
       });
 
-      const data = await response.json();
+      if (!userResponse.ok) {
+        const errorText = await userResponse.text();
+        throw new Error(errorText || "Une erreur est survenue");
+      }
 
-      if (!response.ok) {
-        throw new Error(data.Message || "Une erreur est survenue");
+      const createdUser = await userResponse.json();
+      console.log('Utilisateur créé:', createdUser);
+
+      // Vérifier si nous avons un UserId dans la réponse
+      if (selectedFile && createdUser.userId) { // Changé de id à userId
+        console.log('ID utilisateur reçu:', createdUser.userId);
+        
+        const photoFormData = new FormData();
+        photoFormData.append('file', selectedFile);
+
+        const photoResponse = await fetch(`https://localhost:7141/api/user/${createdUser.userId}/upload-photo`, {
+          method: 'POST',
+          body: photoFormData
+        });
+
+        if (!photoResponse.ok) {
+          console.error('Erreur upload photo:', await photoResponse.text());
+          throw new Error('Erreur lors de l\'upload de la photo');
+        }
+
+        const photoResult = await photoResponse.json();
+        console.log('Photo uploadée avec succès:', photoResult);
+      } else {
+        console.log('Données manquantes pour l\'upload:', {
+          hasFile: !!selectedFile,
+          userId: createdUser.userId
+        });
       }
 
       setSuccess("Utilisateur créé avec succès!");
@@ -104,7 +147,10 @@ const CreateUser  = () => {
         role: '',
         genre: ''
       });
+      setSelectedFile(null);
+      setPreviewUrl(null);
     } catch (err) {
+      console.error('Erreur complète:', err);
       setApiError(err.message);
     }
   };
@@ -244,6 +290,32 @@ const CreateUser  = () => {
               <option value="féminin">Féminin</option>
             </select>
             {errors.genre && <p className="text-red-500 text-sm mt-1">{errors.genre}</p>}
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-gray-700 font-semibold mb-2">Photo de profil</label>
+          <div className="flex items-center space-x-4">
+            {previewUrl && (
+              <div className="w-24 h-24 rounded-full overflow-hidden">
+                <img 
+                  src={previewUrl} 
+                  alt="Prévisualisation" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100"
+            />
           </div>
         </div>
 
