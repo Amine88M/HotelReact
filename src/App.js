@@ -29,10 +29,11 @@ function App() {
           <Route path="users" element={<AdminDashboard />} />
           <Route path="users/edit/:id" element={<EditUser />} />
           <Route path="create-user" element={<CreateUserPage />} />
+          <Route path="create-chambre" element={<CreateChambre />} />
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         </Route>
-        
+       
         <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
         
         {/* Protected Receptionist Routes */}
@@ -52,12 +53,9 @@ function App() {
           <Route path="today-reservations" element={<TodayReservations />} />
           <Route path="reservations" element={<Reservations />} />
           <Route path="create-reservation" element={<ReservationForm />} />
-<<<<<<< HEAD
-          <Route path="chambres" element={ <Chambre />} />
-          <Route path="create-chambre" element={<CreateChambre />} />
-=======
+
           <Route path="chambres" element={<Chambre />} />
->>>>>>> 5df7b754d286daaa0c1dd052849ea24c06d433b7
+
         </Route>
       </Routes>
     </Router>

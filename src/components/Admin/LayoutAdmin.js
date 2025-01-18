@@ -3,6 +3,7 @@ import { Link, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiChevronLeft } from 'react-icons/fi';
 import { MdDashboard, MdPersonAdd, MdPeople, MdSecurity, MdPassword, MdLogout } from 'react-icons/md';
+import { MdBed } from 'react-icons/md'; // Icône de lit pour représenter une chambre
 
 function LayoutAdmin() {
   const [isOpen, setIsOpen] = useState(true);
@@ -55,6 +56,16 @@ function LayoutAdmin() {
                   <span className="group-hover:text-white">Liste des Utilisateurs</span>
                 </Link>
                 
+
+                <Link
+      to="/admin/create-chambre"
+      className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
+    >
+      {/* Icône de lit */}
+      <MdBed className="mr-3 text-2xl text-yellow-400 group-hover:text-white" />
+      <span className="group-hover:text-white">Créer une chambre</span>
+    </Link>
+
                 <Link 
                   to="/admin/roles" 
                   className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
