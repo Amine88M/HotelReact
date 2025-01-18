@@ -3,15 +3,16 @@ import ReservationForm from './components/ReservationForm/ReservationForm';
 import Login from './components/Login';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import CreateUserPage from './components/Admin/CreateUser';
+import EditUser from './components/Admin/EditUser';
 import PersonnelDeMenageUI from './components/PersonnelDeMenage/PersonnelDeMenageUI';
 import Layout from './components/Receptionist/Layout';
 import LayoutAdmin from './components/Admin/LayoutAdmin';
 import Chambre from './components/Chambres/Chambre';
 import Reservations from './components/Receptionist/Reservations';
-import  TodayReservations  from './components/Receptionist/TodayReservations';
-import  Dashboard  from './components/Receptionist/Dashboard';
-import  CheckIn  from './components/Receptionist/CheckIn';
-import  CheckOut  from './components/Receptionist/CheckOut';
+import TodayReservations from './components/Receptionist/TodayReservations';
+import Dashboard from './components/Receptionist/Dashboard';
+import CheckIn from './components/Receptionist/CheckIn';
+import CheckOut from './components/Receptionist/CheckOut';
 import ProtectedRoute from './components/ProtectedRoute';
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
@@ -25,14 +26,14 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/admin" element={<LayoutAdmin />}>
-
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<AdminDashboard />} />
+          <Route path="users/edit/:id" element={<EditUser />} />
           <Route path="create-user" element={<CreateUserPage />} />
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
-        
         </Route>
+        
         <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
         
         {/* Protected Receptionist Routes */}
