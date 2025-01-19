@@ -1,11 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, LogIn, LogOut, Menu, BedDouble, UserCircle, X, Camera, Key, CalendarCheck ,Settings} from 'lucide-react';
 import { Link,Outlet} from 'react-router-dom';
+import Profile from '../Profile/Profile';
 
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState(null);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+
+    if (userId) {
+      fetch(`https://localhost:7141/api/user/${userId}/photo`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Erreur de chargement de la photo');
+        return response.blob();
+      })
+      .then(blob => {
+        setProfilePhoto(URL.createObjectURL(blob));
+      })
+      .catch(error => {
+        console.error('Erreur:', error);
+      });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,30 +70,35 @@ export default function Layout({ children }) {
               <div className="relative">
                 <button 
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center p-2 rounded-lg hover:bg-gray-100"
+                  className="flex items-center justify-center p-1 rounded-full hover:bg-gray-100"
                 >
-                  <UserCircle size={32} className="text-gray-600" />
+                  {profilePhoto ? (
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-600 shadow-md">
+                      <img 
+                        src={profilePhoto} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <UserCircle size={48} className="text-gray-600" />
+                  )}
                 </button>
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1">
                     <button
                       className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                      onClick={() => {/* Handle profile picture change */}}
+                      onClick={() => setIsProfileModalOpen(true)}
                     >
-                      <Camera size={16} />
-                      Change Profile Picture
+                      <UserCircle size={16} />
+                      Profile
                     </button>
-                    <button
-                      className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                      onClick={() => {/* Handle password change */}}
-                    >
-                      <Key size={16} />
-                      Change Password
-                    </button>
-                    <button >
-                    <Link to="/" className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left">
-                    Déconnexion
-                    </Link> 
+                    
+                    <button>
+                      <Link to="/" className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                        <LogOut size={16} />
+                        Déconnexion
+                      </Link> 
                     </button>
                   </div>
                 )}
@@ -130,6 +161,11 @@ export default function Layout({ children }) {
       </div>
   
 
+      
+      <Profile 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
       
     </div>
   );
