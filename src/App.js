@@ -20,8 +20,8 @@ import CreateChambre from './components/Chambres/CreateChambre';
 
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
-
-import ReserverServices from './components/InterfaceServices/ReserverServices';
+import ReserverServices from './components/InterfaceService/ReserverServices';
+import CreateService from './components/InterfaceServices/CreateService';
 
 import './App.css';
 
@@ -40,7 +40,7 @@ function App() {
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         </Route>
-       
+        <Route path="create-service" element={<CreateService />} />
         <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
         
         {/* Protected Receptionist Routes */}

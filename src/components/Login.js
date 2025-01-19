@@ -87,12 +87,18 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center bg-cover bg-center" style={{backgroundImage: "url('/images/image.jpg')"}}>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center bg-cover bg-center" style={{backgroundImage: "url('/images/image.png')"}}>
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
         <h2 className="text-2xl font-bold text-center mb-6">Connexion</h2>
 
         {apiResponse && (
-          <div className={`p-4 mb-4 rounded ${errors.email || errors.password || errors.role ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          <div className={`p-4 mb-4 rounded ${
+            apiResponse.toLowerCase().includes('échec') || 
+            apiResponse.toLowerCase().includes('erreur') || 
+            apiResponse.toLowerCase().includes('vérifiez') 
+              ? 'bg-red-100 text-red-700' 
+              : 'bg-green-100 text-green-700'
+          }`}>
             {apiResponse}
           </div>
         )}

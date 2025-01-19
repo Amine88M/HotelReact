@@ -88,7 +88,8 @@ const AdminDashboard = () => {
       return;
     }
 
-    const result = await Swal.fire({
+    // Première confirmation
+    const firstConfirm = await Swal.fire({
       title: 'Êtes-vous sûr ?',
       text: 'Cette action supprimera les utilisateurs sélectionnés !',
       icon: 'warning',
@@ -99,28 +100,61 @@ const AdminDashboard = () => {
       cancelButtonText: 'Annuler'
     });
 
-    if (result.isConfirmed) {
-      try {
-        const response = await fetch('https://localhost:7141/api/admin/deleteselectedusers', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(selectedUsers)
-        });
-
-        if (response.ok) {
-          setUsers(prevUsers => prevUsers.filter(user => !selectedUsers.includes(user.id)));
-          setSelectedUsers([]);
-          Swal.fire('Supprimé !', 'Les utilisateurs sélectionnés ont été supprimés.', 'success');
-        } else {
-          const errorText = await response.text();
-          throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
+    if (firstConfirm.isConfirmed) {
+      // Demande du mot de passe
+      const passwordCheck = await Swal.fire({
+        title: 'Vérification de sécurité',
+        text: 'Veuillez saisir le mot de passe de confirmation',
+        input: 'password',
+        inputPlaceholder: 'Mot de passe',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmer',
+        cancelButtonText: 'Annuler',
+        inputValidator: (value) => {
+          if (!value) {
+            return 'Veuillez saisir le mot de passe';
+          }
         }
-      } catch (error) {
-        console.error('Erreur:', error);
-        Swal.fire('Erreur !', error.message || 'Une erreur s\'est produite lors de la suppression.', 'error');
+      });
+
+      if (passwordCheck.isConfirmed) {
+        // Vérification du mot de passe
+        if (passwordCheck.value === '123Abc') {
+          try {
+            const response = await fetch('https://localhost:7141/api/admin/deleteselectedusers', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              },
+              body: JSON.stringify(selectedUsers)
+            });
+
+            if (response.ok) {
+              setUsers(prevUsers => prevUsers.filter(user => !selectedUsers.includes(user.id)));
+              setSelectedUsers([]);
+              Swal.fire('Supprimé !', 'Les utilisateurs sélectionnés ont été supprimés.', 'success');
+            } else {
+              throw new Error('Erreur lors de la suppression');
+            }
+          } catch (error) {
+            console.error('Erreur:', error);
+            Swal.fire('Erreur !', error.message || 'Une erreur s\'est produite lors de la suppression.', 'error');
+          }
+        } else {
+          // Mot de passe incorrect - Déconnexion
+          await Swal.fire({
+            title: 'Mot de passe incorrect',
+            text: 'Vous allez être déconnecté pour des raisons de sécurité.',
+            icon: 'error',
+            confirmButtonColor: '#d33',
+            allowOutsideClick: false
+          });
+          
+          // Déconnexion
+          localStorage.clear(); // Effacer toutes les données de session
+          navigate('/login'); // Redirection vers la page de login
+        }
       }
     }
   };
@@ -186,17 +220,7 @@ const AdminDashboard = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="w-12 px-6 py-3 border-b">
-                <input 
-                  type="checkbox"
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedUsers(users.map(user => user.id));
-                    } else {
-                      setSelectedUsers([]);
-                    }
-                  }}
-                  className="rounded"
-                />
+                Sélection
               </th>
               <th 
                 className="px-6 py-3 border-b text-left cursor-pointer"

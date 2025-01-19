@@ -17,6 +17,28 @@ import {
   Coffee,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import AWS from 'aws-sdk';
+import emailjs from '@emailjs/browser';
+
+// Remplacer les constantes Twilio par les credentials AWS
+const AWS_ACCESS_KEY = 'VOTRE_ACCESS_KEY';
+const AWS_SECRET_KEY = 'VOTRE_SECRET_KEY';
+const AWS_REGION = 'eu-west-1'; // Choisissez votre région
+
+// Configurer AWS
+AWS.config.update({
+  accessKeyId: AWS_ACCESS_KEY,
+  secretAccessKey: AWS_SECRET_KEY,
+  region: AWS_REGION
+});
+
+// Créer une instance SNS
+const sns = new AWS.SNS();
+
+// Remplacer les constantes AWS par EmailJS
+const EMAILJS_SERVICE_ID = 'service_6p4yzr8';
+const EMAILJS_TEMPLATE_ID = 'template_wpc01rg';
+const EMAILJS_PUBLIC_KEY = 'RzyLN2Dx4ZY532q7c';
 
 const ReservationDetails = () => {
   const navigate = useNavigate();
@@ -25,6 +47,7 @@ const ReservationDetails = () => {
   const [paiement, setPaiement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -182,49 +205,94 @@ const ReservationDetails = () => {
     }
   };
 
+  // Ajoutez cette fonction de formatage
+  const formatPhoneNumberToInternational = (phoneNumber) => {
+    // Enlever les espaces ou autres caractères
+    let cleaned = phoneNumber.replace(/\s+/g, '');
+    
+    // Si le numéro commence par 0
+    if (cleaned.startsWith('0')) {
+      // Remplacer le 0 par +212 (pour le Maroc)
+      cleaned = '+212' + cleaned.substring(1);
+    }
+    
+    return cleaned;
+  };
+
   const handleSendReminder = async () => {
     try {
-      const result = await Swal.fire({
-        title: 'Envoyer un rappel',
-        text: 'Voulez-vous envoyer un SMS de rappel au client ?',
-        icon: 'question',
+      const { value: emailToUse, isConfirmed: isEmailConfirmed } = await Swal.fire({
+        title: 'Email du client',
+        html: `
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">
+              Veuillez saisir l'email du client
+            </label>
+            <input 
+              type="email" 
+              id="swal-input-email" 
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              placeholder="exemple@email.com"
+              value="${reservation.email || ''}"
+            >
+          </div>
+        `,
         showCancelButton: true,
-        confirmButtonText: 'Oui, envoyer',
+        confirmButtonText: 'Envoyer',
         cancelButtonText: 'Annuler',
         confirmButtonColor: '#3085d6',
+        preConfirm: () => {
+          const email = document.getElementById('swal-input-email').value;
+          if (!email) {
+            Swal.showValidationMessage('L\'email est requis');
+            return false;
+          }
+          return email;
+        }
       });
 
-      if (result.isConfirmed) {
-        const response = await fetch('https://localhost:7141/api/sms/send-reminder', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            phoneNumber: reservation.telephone,
-            checkInDate: reservation.dateCheckIn,
-            reservationId: reservation.id,
-            clientName: `${reservation.prenom} ${reservation.nom}`
-          })
-        });
+      if (!isEmailConfirmed) return;
 
-        if (!response.ok) {
-          throw new Error('Erreur lors de l\'envoi du SMS');
-        }
+      setIsSending(true);
 
-        await Swal.fire({
+      // Paramètres correspondant exactement au template
+      const templateParams = {
+        to_email: emailToUse,
+        to_name: `${reservation.prenom} ${reservation.nom}`,
+        hotel_name: "Khelesseni",
+        check_in_date: new Date(reservation.dateCheckIn).toLocaleDateString('fr-FR'),
+        check_out_date: new Date(reservation.dateCheckOut).toLocaleDateString('fr-FR')
+      };
+
+      console.log('Paramètres envoyés:', templateParams);
+
+      const response = await emailjs.send(
+        'service_j33v4na',
+        'template_1jbwiuq',
+        templateParams,
+        'RzyLN2Dx4ZY532q7c'
+      );
+
+      console.log('Réponse du serveur:', response);
+
+      if (response.status === 200) {
+        Swal.fire({
           title: 'Succès!',
-          text: 'Le SMS de rappel a été envoyé avec succès',
+          text: `L'email a été envoyé à ${emailToUse}`,
           icon: 'success',
+          confirmButtonColor: '#3085d6'
         });
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur complète:', error);
       Swal.fire({
         title: 'Erreur!',
-        text: 'Une erreur est survenue lors de l\'envoi du SMS',
+        text: 'Erreur lors de l\'envoi de l\'email. Vérifiez la console pour plus de détails.',
         icon: 'error',
+        confirmButtonColor: '#F8B1A5'
       });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -407,17 +475,18 @@ const ReservationDetails = () => {
             </h2>
             <div className="space-y-4">
               <p className="text-gray-600 mb-4">
-                Envoyez un SMS de rappel au client pour sa réservation prévue le{' '}
+                Envoyez un email de rappel au client pour sa réservation prévue le{' '}
                 {new Date(reservation.dateCheckIn).toLocaleDateString('fr-FR')}
               </p>
               <button
                 onClick={handleSendReminder}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200"
+                disabled={isSending}
+                className={`w-full ${isSending ? 'bg-blue-400' : 'bg-blue-600'} text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200`}
               >
-                Envoyer un rappel SMS
+                {isSending ? 'Envoi en cours...' : 'Envoyer un rappel email'}
               </button>
               <div className="text-sm text-gray-500 mt-2">
-                Le SMS sera envoyé au {reservation.telephone}
+                L'email sera envoyé à {reservation.email}
               </div>
             </div>
           </div>
