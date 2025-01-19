@@ -8,12 +8,22 @@ export default function Reservations() {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState(null);
+  const [showTypeOptions, setShowTypeOptions] = useState(false); // Pour afficher/masquer les options de type
+  const [showStatutOptions, setShowStatutOptions] = useState(false); // Pour afficher/masquer les options de statut
+  const [selectedType, setSelectedType] = useState(null); // Pour stocker le type sélectionné
+  const [selectedStatut, setSelectedStatut] = useState(null); // Pour stocker le statut sélectionné
+  const [infoMessage, setInfoMessage] = useState(null); // Pour afficher un message d'information
 
   const typesChambres = {
     1: "Simple",
     2: "Double",
     3: "Suite",
+  };
+
+  const statutsReservation = {
+    "reserved": "Réservée",
+    "checked-in": "Checked-in",
+    "cancelled": "Annulée",
   };
 
   // Récupérer les réservations depuis l'API
@@ -43,41 +53,52 @@ export default function Reservations() {
     fetchReservations();
   }, []);
 
-  // Filtrer les réservations en fonction du terme de recherche
+  // Filtrer les réservations en fonction du terme de recherche, du type et du statut
   const filteredReservations = reservations.filter((reservation) => {
     const searchText = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       reservation.id.toString().includes(searchText) ||
       reservation.nom.toLowerCase().includes(searchText) ||
-      reservation.prenom.toLowerCase().includes(searchText)
-    );
+      reservation.prenom.toLowerCase().includes(searchText);
+
+    const matchesType = selectedType ? reservation.id_Type_Chambre === selectedType : true;
+    const matchesStatut = selectedStatut ? reservation.statut === selectedStatut : true;
+
+    return matchesSearch && matchesType && matchesStatut;
   });
 
-  // Trier les réservations
-  const sortedReservations = [...filteredReservations].sort((a, b) => {
-    if (sortBy === 'typeChambre') {
-      return typesChambres[a.id_Type_Chambre].localeCompare(typesChambres[b.id_Type_Chambre]);
-    } else if (sortBy === 'statut') {
-      if (a.statut === "reserved" && b.statut !== "reserved") {
-        return -1; // "Reserved" vient en premier
-      } else if (b.statut === "reserved" && a.statut !== "reserved") {
-        return 1; // "Reserved" vient en premier
-      } else {
-        return a.statut.localeCompare(b.statut);
+  // Afficher un message d'information temporaire
+  const showTemporaryMessage = (message) => {
+    setInfoMessage(message);
+    setTimeout(() => {
+      setInfoMessage(null);
+    }, 3000); // Le message disparaît après 3 secondes
+  };
+
+  // Vérifier si aucune réservation ne correspond aux critères
+  useEffect(() => {
+    if (filteredReservations.length === 0 && (selectedType || selectedStatut || searchTerm)) {
+      const typeLabel = selectedType ? typesChambres[selectedType] : null;
+      const statutLabel = selectedStatut ? statutsReservation[selectedStatut] : null;
+
+      if (typeLabel && statutLabel) {
+        showTemporaryMessage(`Aucune réservation de type "${typeLabel}" et de statut "${statutLabel}".`);
+      } else if (typeLabel) {
+        showTemporaryMessage(`Aucune réservation de type "${typeLabel}".`);
+      } else if (statutLabel) {
+        showTemporaryMessage(`Aucune réservation avec le statut "${statutLabel}".`);
+      } else if (searchTerm) {
+        showTemporaryMessage(`Aucune réservation ne correspond à la recherche "${searchTerm}".`);
       }
     }
-    return 0; // Pas de tri
-  });
+  }, [filteredReservations, selectedType, selectedStatut, searchTerm]);
 
-  // Rediriger vers la page de création de réservation
-  const handleCreateReservation = () => {
-    navigate('/Receptionist/create-reservation');
-  };
-
-  // Rediriger vers la page de détails d'une réservation
-  const handleViewReservationDetails = (id) => {
-    navigate(`/reservations/${id}`);
-  };
+  // Réinitialiser les filtres
+  /*const resetFilters = () => {
+    setSelectedType(null);
+    setSelectedStatut(null);
+    setSearchTerm('');
+  };*/
 
   // Gérer la sélection/désélection des réservations
   const handleRowCheckboxChange = (id) => {
@@ -197,23 +218,74 @@ export default function Reservations() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <button
-            onClick={() => setSortBy('typeChambre')}
-            className={`px-4 py-2 text-sm font-medium ${
-              sortBy === 'typeChambre' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
-            } rounded-lg hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowTypeOptions(!showTypeOptions);
+                setShowStatutOptions(false); // Masquer les options de statut si elles sont ouvertes
+              }}
+              className={`px-4 py-2 text-sm font-medium ${
+                selectedType ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
+              } rounded-lg hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+            >
+              Trier par Type de Chambre
+            </button>
+            {showTypeOptions && (
+              <div className="absolute mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                {Object.entries(typesChambres).map(([key, value]) => (
+                  <div
+                    key={key}
+                    onClick={() => {
+                      setSelectedType(Number(key));
+                      setShowTypeOptions(false); // Masquer les options après sélection
+                    }}
+                    className="px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {value}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowStatutOptions(!showStatutOptions);
+                setShowTypeOptions(false); // Masquer les options de type si elles sont ouvertes
+              }}
+              className={`px-4 py-2 text-sm font-medium ${
+                selectedStatut ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
+              } rounded-lg hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+            >
+              Trier par Statut
+            </button>
+            {showStatutOptions && (
+              <div className="absolute mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                {Object.entries(statutsReservation).map(([key, value]) => (
+                  <div
+                    key={key}
+                    onClick={() => {
+                      setSelectedStatut(key);
+                      setShowStatutOptions(false); // Masquer les options après sélection
+                    }}
+                    className="px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {value}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* <button
+            onClick={resetFilters}
+            className="px-4 py-2 text-sm font-medium text-gray-800 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
-            Trier par Type de Chambre
-          </button>
-          <button
-            onClick={() => setSortBy('statut')}
-            className={`px-4 py-2 text-sm font-medium ${
-              sortBy === 'statut' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
-            } rounded-lg hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-          >
-            Trier par Statut
-          </button>
-          
+            Réinitialiser
+          </button> */}
+
           <button
             onClick={handleDeleteSelected}
             disabled={selectedIds.length === 0}
@@ -222,6 +294,30 @@ export default function Reservations() {
             Supprimer la sélection
           </button>
         </div>
+      </div>
+
+      {/* Message d'information temporaire */}
+      {infoMessage && (
+        <div className="mb-4 p-3 bg-blue-100 text-blue-800 rounded-lg flex items-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span>{infoMessage}</span>
+        </div>
+      )}
+
+      {/* Nombre de résultats */}
+      <div className="mb-4 text-sm text-gray-600">
+        {filteredReservations.length} réservation(s) trouvée(s)
       </div>
 
       {loading ? (
@@ -262,7 +358,7 @@ export default function Reservations() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {sortedReservations.map((reservation) => (
+              {filteredReservations.map((reservation) => (
                 <tr key={reservation.id} className="hover:bg-gray-50">
                   <td className="px-3 py-4">
                     <input
@@ -291,11 +387,11 @@ export default function Reservations() {
                     {typesChambres[reservation.id_Type_Chambre] || "Inconnu"}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {reservation.statut}
+                    {statutsReservation[reservation.statut] || reservation.statut}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm">
                     <button
-                      onClick={() => handleViewReservationDetails(reservation.id)}
+                  //    onClick={() => handleViewReservationDetails(reservation.id)}
                       className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md text-sm font-medium mr-2"
                     >
                       Détails

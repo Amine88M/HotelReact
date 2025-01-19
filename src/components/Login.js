@@ -14,6 +14,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [apiResponse, setApiResponse] = useState('');
   const navigate = useNavigate();
+ 
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -57,6 +58,13 @@ const Login = () => {
 
         if (response.data?.success) {
           const role = response.data?.role;
+          const userId = response.data?.id;
+          console.log('ID utilisateur:', userId);
+          localStorage.setItem('userId', userId);
+          console.log('userId:', userId);
+          localStorage.setItem('role', role);
+          console.log('role:', role);
+
           switch (role) {
             case 'Admin':
               navigate('/admin');

@@ -14,8 +14,12 @@ import Dashboard from './components/Receptionist/Dashboard';
 import CheckIn from './components/Receptionist/CheckIn';
 import CheckOut from './components/Receptionist/CheckOut';
 import ProtectedRoute from './components/ProtectedRoute';
+
+import CreateChambre from './components/Chambres/CreateChambre';
+
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
+
 
 import './App.css';
 
@@ -30,10 +34,11 @@ function App() {
           <Route path="users" element={<AdminDashboard />} />
           <Route path="users/edit/:id" element={<EditUser />} />
           <Route path="create-user" element={<CreateUserPage />} />
+          <Route path="create-chambre" element={<CreateChambre />} />
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         </Route>
-        
+       
         <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
         
         {/* Protected Receptionist Routes */}
@@ -53,9 +58,15 @@ function App() {
           <Route path="today-reservations" element={<TodayReservations />} />
           <Route path="reservations" element={<Reservations />} />
           <Route path="create-reservation" element={<ReservationForm />} />
+
+
+          <Route path="chambres" element={<Chambre />} />
+
+
           <Route path="chambres" element={ <Chambre />} />
           <Route path="checkInModal" element={<CheckInModal />} />
           <Route path="checkOutModal" element={<CheckOutModal />} />
+
         </Route>
       </Routes>
     </Router>
