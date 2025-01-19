@@ -182,6 +182,52 @@ const ReservationDetails = () => {
     }
   };
 
+  const handleSendReminder = async () => {
+    try {
+      const result = await Swal.fire({
+        title: 'Envoyer un rappel',
+        text: 'Voulez-vous envoyer un SMS de rappel au client ?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Oui, envoyer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#3085d6',
+      });
+
+      if (result.isConfirmed) {
+        const response = await fetch('https://localhost:7141/api/sms/send-reminder', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phoneNumber: reservation.telephone,
+            checkInDate: reservation.dateCheckIn,
+            reservationId: reservation.id,
+            clientName: `${reservation.prenom} ${reservation.nom}`
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de l\'envoi du SMS');
+        }
+
+        await Swal.fire({
+          title: 'Succès!',
+          text: 'Le SMS de rappel a été envoyé avec succès',
+          icon: 'success',
+        });
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      Swal.fire({
+        title: 'Erreur!',
+        text: 'Une erreur est survenue lors de l\'envoi du SMS',
+        icon: 'error',
+      });
+    }
+  };
+
   if (loading) return <div>Chargement...</div>;
   if (error) return <div>Erreur: {error}</div>;
   if (!reservation) return <div>Aucune réservation trouvée</div>;
@@ -211,15 +257,6 @@ const ReservationDetails = () => {
             <div className="flex gap-2">
               <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                 Modifier
-              </button>
-              <button
-                onClick={() => handleCancelReservation(id)}
-                className="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md text-sm font-medium flex items-center"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                Annuler la réservation
               </button>
             </div>
           </div>
@@ -257,6 +294,19 @@ const ReservationDetails = () => {
               Détails Réservation
             </h2>
             <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b">
+                <div className="flex items-center text-gray-700">
+                  <Calendar className="mr-2" size={16} />
+                  <span>Date de réservation</span>
+                </div>
+                <span className="font-medium">
+                  {new Date(reservation.dateReservation).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
               <div className="flex justify-between items-center py-2 border-b">
                 <div className="flex items-center text-gray-700">
                   <Calendar className="mr-2" size={16} />
@@ -347,26 +397,32 @@ const ReservationDetails = () => {
           </div>
         </div>
 
-        {/* Services et Demandes spéciales */}
+        {/* Rappel de réservation et Notes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Rappel de réservation */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Coffee className="mr-2" size={20} />
-              Services Additionnels
+              <MessageSquare className="mr-2" size={20} />
+              Rappel de réservation
             </h2>
-            <div className="space-y-3">
-              {/* Exemple de services (à adapter selon les données de l'API) */}
-              <div className="flex justify-between items-center py-2 border-b last:border-0">
-                <span className="text-gray-700">Petit-déjeuner</span>
-                <span className="font-medium">15 € / jour</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b last:border-0">
-                <span className="text-gray-700">Parking</span>
-                <span className="font-medium">20 € / jour</span>
+            <div className="space-y-4">
+              <p className="text-gray-600 mb-4">
+                Envoyez un SMS de rappel au client pour sa réservation prévue le{' '}
+                {new Date(reservation.dateCheckIn).toLocaleDateString('fr-FR')}
+              </p>
+              <button
+                onClick={handleSendReminder}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200"
+              >
+                Envoyer un rappel SMS
+              </button>
+              <div className="text-sm text-gray-500 mt-2">
+                Le SMS sera envoyé au {reservation.telephone}
               </div>
             </div>
           </div>
 
+          {/* Notes et Demandes Spéciales */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
               <MessageSquare className="mr-2" size={20} />

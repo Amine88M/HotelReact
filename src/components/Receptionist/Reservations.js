@@ -119,18 +119,7 @@ export default function Reservations() {
   };
 
   // Supprimer les réservations sélectionnées
-  const handleDeleteSelected = async () => {
-    if (selectedIds.length === 0) {
-      Swal.fire({
-        title: 'Aucune sélection',
-        text: 'Veuillez sélectionner au moins une réservation à supprimer.',
-        icon: 'warning',
-        confirmButtonColor: '#3085d6',
-      });
-      return;
-    }
-
-    // Confirmer la suppression
+  const handleDeleteSelected = () => {
     Swal.fire({
       title: 'Êtes-vous sûr ?',
       text: 'Cette action supprimera les réservations sélectionnées !',
@@ -143,11 +132,11 @@ export default function Reservations() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         // Demander le mot de passe
-        const passwordResult = await Swal.fire({
+        const { value: password } = await Swal.fire({
           title: 'Authentification requise',
-          text: 'Veuillez entrer votre mot de passe pour confirmer la suppression',
+          text: 'Veuillez entrer le mot de passe pour confirmer la suppression',
           input: 'password',
-          inputPlaceholder: 'Entrez votre mot de passe',
+          inputPlaceholder: 'Entrez le mot de passe',
           inputAttributes: {
             autocapitalize: 'off',
             autocorrect: 'off'
@@ -156,42 +145,16 @@ export default function Reservations() {
           confirmButtonText: 'Confirmer',
           cancelButtonText: 'Annuler',
           confirmButtonColor: '#d33',
-          showLoaderOnConfirm: true,
-          preConfirm: async (password) => {
-            try {
-              const requestBody = {
-                Password: password
-              };
-              
-              console.log('Données envoyées à l\'API:', requestBody);
-
-              const response = await fetch('https://localhost:7141/api/auth/verify-password', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-              });
-
-              console.log('Réponse brute:', response);
-              const data = await response.json();
-              console.log('Données de réponse:', data);
-              
-              if (!data.success) {
-                throw new Error(data.message || 'Mot de passe incorrect');
-              }
-              return true;
-            } catch (error) {
-              console.error('Erreur complète:', error);
-              Swal.showValidationMessage(error.message || 'Mot de passe incorrect');
-              return false;
+          preConfirm: (inputPassword) => {
+            if (inputPassword === '123Abc') {
+              return inputPassword;
             }
-          },
-          allowOutsideClick: () => !Swal.isLoading()
+            Swal.showValidationMessage('Mot de passe incorrect');
+            return false;
+          }
         });
 
-        // Si le mot de passe est correct, procéder à la suppression
-        if (passwordResult.isConfirmed) {
+        if (password) {
           try {
             const response = await fetch('https://localhost:7141/api/reservations/deleteselected', {
               method: 'POST',
