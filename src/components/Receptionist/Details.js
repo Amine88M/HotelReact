@@ -1,58 +1,62 @@
-import React from 'react';
-import { 
-  User, 
-  Calendar, 
-  Clock, 
-  CreditCard, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  BedDouble, 
-  Users, 
-  Utensils, 
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom'; // Pour récupérer l'ID de l'URL
+import {
+  User,
+  Calendar,
+  Clock,
+  CreditCard,
+  Phone,
+  Mail,
+  MapPin,
+  BedDouble,
+  Users,
+  Utensils,
   Receipt,
   MessageSquare,
   AlertCircle,
-  Coffee
+  Coffee,
 } from 'lucide-react';
 
-const Details = ({ reservation }) => {
-  // Exemple de données de réservation
-  const sampleReservation = {
-    id: "RES-2024-001",
-    status: "confirmed",
-    guest: {
-      name: "Jean Dupont",
-      email: "jean.dupont@email.com",
-      phone: "+33 6 12 34 56 78",
-      address: "123 Rue de Paris, 75001 Paris",
-      nationality: "French",
-      idType: "Passport",
-      idNumber: "PAB123456",
-    },
-    stay: {
-      checkIn: "2024-01-20T14:00:00",
-      checkOut: "2024-01-25T12:00:00",
-      numberOfNights: 5,
-      roomType: "Chambre Deluxe",
-      roomNumber: "304",
-      adults: 2,
-      children: 1,
-    },
-    payment: {
-      totalAmount: 750.00,
-      paid: 250.00,
-      remaining: 500.00,
-      paymentMethod: "Carte Bancaire",
-      paymentStatus: "Acompte versé",
-    },
-    services: [
-      { name: "Petit-déjeuner", price: 15, perDay: true },
-      { name: "Parking", price: 20, perDay: true },
-    ],
-    specialRequests: "Lit bébé requis, chambre calme si possible",
-    notes: "Client fidèle - 3ème séjour"
-  };
+const ReservationDetails = () => {
+  const { id } = useParams(); // Récupère l'ID de l'URL
+  const [reservation, setReservation] = useState(null);
+  const [paiement, setPaiement] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Récupérer les détails de la réservation
+        const resResponse = await fetch(`https://localhost:7141/api/reservations/${id}`);
+        if (!resResponse.ok) throw new Error('Erreur lors de la récupération de la réservation');
+        const resData = await resResponse.json();
+        console.log('Données réservation:', resData);
+        setReservation(resData);
+
+        // Récupérer le paiement associé à la réservation
+        const paiementResponse = await fetch(`https://localhost:7141/api/paiements/reservation/${id}`);
+        if (paiementResponse.ok) {
+          const paiementData = await paiementResponse.json();
+          console.log('Données paiement:', paiementData);
+          setPaiement(paiementData);
+        }
+      } catch (err) {
+        console.error('Erreur:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  if (loading) return <div>Chargement...</div>;
+  if (error) return <div>Erreur: {error}</div>;
+  if (!reservation) return <div>Aucune réservation trouvée</div>;
+
+  console.log('État paiement:', paiement); // Pour vérifier l'état
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
@@ -61,14 +65,16 @@ const Details = ({ reservation }) => {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Réservation #{sampleReservation.id}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Réservation #{reservation.id}</h1>
               <div className="mt-1 flex items-center">
-                <span className={`px-3 py-1 rounded-full text-sm ${
-                  sampleReservation.status === 'confirmed' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {sampleReservation.status === 'confirmed' ? 'Confirmée' : 'En attente'}
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    reservation.statut === 'Confirmée'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}
+                >
+                  {reservation.statut}
                 </span>
               </div>
             </div>
@@ -94,27 +100,13 @@ const Details = ({ reservation }) => {
               <div className="space-y-3">
                 <div className="flex items-center text-gray-700">
                   <User className="mr-2" size={16} />
-                  <span className="font-medium">{sampleReservation.guest.name}</span>
-                </div>
-                <div className="flex items-center text-gray-700">
-                  <Mail className="mr-2" size={16} />
-                  <span>{sampleReservation.guest.email}</span>
+                  <span className="font-medium">
+                    {reservation.nom} {reservation.prenom}
+                  </span>
                 </div>
                 <div className="flex items-center text-gray-700">
                   <Phone className="mr-2" size={16} />
-                  <span>{sampleReservation.guest.phone}</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div className="space-y-3">
-                <div className="flex items-center text-gray-700">
-                  <MapPin className="mr-2" size={16} />
-                  <span>{sampleReservation.guest.address}</span>
-                </div>
-                <div className="flex items-center text-gray-700">
-                  <AlertCircle className="mr-2" size={16} />
-                  <span>ID: {sampleReservation.guest.idType} - {sampleReservation.guest.idNumber}</span>
+                  <span>{reservation.telephone}</span>
                 </div>
               </div>
             </div>
@@ -126,7 +118,7 @@ const Details = ({ reservation }) => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
               <BedDouble className="mr-2" size={20} />
-              Détails du Séjour
+              Détails Réservation
             </h2>
             <div className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b">
@@ -135,7 +127,7 @@ const Details = ({ reservation }) => {
                   <span>Check-in</span>
                 </div>
                 <span className="font-medium">
-                  {new Date(sampleReservation.stay.checkIn).toLocaleDateString('fr-FR')}
+                  {new Date(reservation.dateCheckIn).toLocaleDateString('fr-FR')}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
@@ -144,30 +136,16 @@ const Details = ({ reservation }) => {
                   <span>Check-out</span>
                 </div>
                 <span className="font-medium">
-                  {new Date(sampleReservation.stay.checkOut).toLocaleDateString('fr-FR')}
+                  {new Date(reservation.dateCheckOut).toLocaleDateString('fr-FR')}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
-                <div className="flex items-center text-gray-700">
-                  <Clock className="mr-2" size={16} />
-                  <span>Durée</span>
-                </div>
-                <span className="font-medium">{sampleReservation.stay.numberOfNights} nuits</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <div className="flex items-center text-gray-700">
-                  <BedDouble className="mr-2" size={16} />
-                  <span>Chambre</span>
-                </div>
-                <span className="font-medium">{sampleReservation.stay.roomType} - {sampleReservation.stay.roomNumber}</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
                 <div className="flex items-center text-gray-700">
                   <Users className="mr-2" size={16} />
                   <span>Occupants</span>
                 </div>
                 <span className="font-medium">
-                  {sampleReservation.stay.adults} adultes, {sampleReservation.stay.children} enfant
+                  {reservation.nombreAdults} adultes, {reservation.nombreEnfants} enfant
                 </span>
               </div>
             </div>
@@ -180,25 +158,55 @@ const Details = ({ reservation }) => {
               Détails du Paiement
             </h2>
             <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-700">Montant total</span>
-                <span className="font-medium">{sampleReservation.payment.totalAmount} €</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-700">Payé</span>
-                <span className="font-medium text-green-600">{sampleReservation.payment.paid} €</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-700">Restant à payer</span>
-                <span className="font-medium text-red-600">{sampleReservation.payment.remaining} €</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <div className="flex items-center text-gray-700">
-                  <CreditCard className="mr-2" size={16} />
-                  <span>Mode de paiement</span>
+              {paiement ? (
+                <>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-700">Montant total</span>
+                    <span className="font-medium">{paiement[0].montant} €</span>
+                  </div>
+
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-700">Méthode de paiement</span>
+                    <span className="font-medium">{paiement[0].methodPaiement}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-700">Date de paiement</span>
+                    <span className="font-medium">
+                      {new Date(paiement[0].datePaiement).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-700">Statut du paiement</span>
+                    <span className={`px-3 py-1 rounded-full text-sm ${
+                      paiement[0].statutPaiement === 0 
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : paiement[0].statutPaiement === 1
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {paiement[0].statutPaiement === 0 ? 'En attente' :
+                       paiement[0].statutPaiement === 1 ? 'Payé' : 'Annulé'}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-700">Référence paiement</span>
+                    <span className="font-medium">#{paiement[0].idPaiement}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  Aucun paiement enregistré pour cette réservation
                 </div>
-                <span className="font-medium">{sampleReservation.payment.paymentMethod}</span>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -211,14 +219,15 @@ const Details = ({ reservation }) => {
               Services Additionnels
             </h2>
             <div className="space-y-3">
-              {sampleReservation.services.map((service, index) => (
-                <div key={index} className="flex justify-between items-center py-2 border-b last:border-0">
-                  <span className="text-gray-700">{service.name}</span>
-                  <span className="font-medium">
-                    {service.price} € {service.perDay ? '/ jour' : ''}
-                  </span>
-                </div>
-              ))}
+              {/* Exemple de services (à adapter selon les données de l'API) */}
+              <div className="flex justify-between items-center py-2 border-b last:border-0">
+                <span className="text-gray-700">Petit-déjeuner</span>
+                <span className="font-medium">15 € / jour</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b last:border-0">
+                <span className="text-gray-700">Parking</span>
+                <span className="font-medium">20 € / jour</span>
+              </div>
             </div>
           </div>
 
@@ -230,11 +239,11 @@ const Details = ({ reservation }) => {
             <div className="space-y-4">
               <div className="bg-yellow-50 p-4 rounded-lg">
                 <h3 className="font-medium text-yellow-800 mb-2">Demandes spéciales</h3>
-                <p className="text-yellow-700">{sampleReservation.specialRequests}</p>
+                <p className="text-yellow-700">Lit bébé requis, chambre calme si possible</p>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h3 className="font-medium text-blue-800 mb-2">Notes internes</h3>
-                <p className="text-blue-700">{sampleReservation.notes}</p>
+                <p className="text-blue-700">Client fidèle - 3ème séjour</p>
               </div>
             </div>
           </div>
@@ -244,4 +253,4 @@ const Details = ({ reservation }) => {
   );
 };
 
-export default Details;
+export default ReservationDetails;
