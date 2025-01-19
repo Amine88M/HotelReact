@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom'; // Pour récupérer l'ID de l'URL
+import { useParams, useNavigate } from 'react-router-dom'; // Pour récupérer l'ID de l'URL
 import {
   User,
   Calendar,
@@ -16,8 +16,10 @@ import {
   AlertCircle,
   Coffee,
 } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const ReservationDetails = () => {
+  const navigate = useNavigate();
   const { id } = useParams(); // Récupère l'ID de l'URL
   const [reservation, setReservation] = useState(null);
   const [paiement, setPaiement] = useState(null);
@@ -52,6 +54,134 @@ const ReservationDetails = () => {
     fetchData();
   }, [id]);
 
+  const handleCancelReservation = async (reservationId) => {
+    try {
+      // Première confirmation avec mot de passe
+      const passwordResult = await Swal.fire({
+        title: 'Authentification requise',
+        text: 'Veuillez entrer votre mot de passe pour confirmer l\'annulation',
+        input: 'password',
+        inputPlaceholder: 'Entrez votre mot de passe',
+        inputAttributes: {
+          autocapitalize: 'off',
+          autocorrect: 'off'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Confirmer',
+        cancelButtonText: 'Retour',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        showLoaderOnConfirm: true,
+        preConfirm: async (password) => {
+          if (!password) {
+            Swal.showValidationMessage('Le mot de passe est requis');
+            return false;
+          }
+          
+          try {
+            const response = await fetch('https://localhost:7141/api/auth/verify-password', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                email: "@receptionist.com",
+                password: password
+              })
+            });
+
+            const data = await response.json();
+            if (data && data.success) {
+              return true;
+            }
+            
+            throw new Error(data.message || 'Mot de passe incorrect');
+          } catch (error) {
+            console.error('Erreur de vérification:', error);
+            Swal.showValidationMessage('Mot de passe incorrect');
+            return false;
+          }
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+      });
+
+      if (!passwordResult.isConfirmed) {
+        return;
+      }
+
+      // Deuxième confirmation avec texte à saisir
+      const confirmResult = await Swal.fire({
+        title: 'Confirmation supplémentaire',
+        text: 'Écrivez "ANNULER" en majuscules pour confirmer l\'annulation',
+        input: 'text',
+        inputPlaceholder: 'ANNULER',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmer',
+        cancelButtonText: 'Retour',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        inputValidator: (value) => {
+          if (value !== 'ANNULER') {
+            return 'Veuillez écrire exactement "ANNULER"';
+          }
+        }
+      });
+
+      if (!confirmResult.isConfirmed) {
+        return;
+      }
+
+      // Dernière confirmation
+      const finalConfirm = await Swal.fire({
+        title: 'Dernière vérification',
+        text: "Cette action est irréversible. Êtes-vous absolument sûr de vouloir annuler cette réservation?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Oui, annuler définitivement',
+        cancelButtonText: 'Non, retour'
+      });
+
+      if (!finalConfirm.isConfirmed) {
+        return;
+      }
+
+      // Procéder à l'annulation
+      const response = await fetch(`https://localhost:7141/api/reservations/${reservationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: reservationId,
+          statut: 'Annulé'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'annulation de la réservation');
+      }
+
+      Swal.fire({
+        title: 'Annulée!',
+        text: 'La réservation a été annulée avec succès.',
+        icon: 'success',
+        confirmButtonColor: '#3085d6'
+      }).then(() => {
+        window.location.reload();
+      });
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      Swal.fire(
+        'Erreur!',
+        'Une erreur est survenue lors de l\'annulation.',
+        'error'
+      );
+    }
+  };
+
   if (loading) return <div>Chargement...</div>;
   if (error) return <div>Erreur: {error}</div>;
   if (!reservation) return <div>Aucune réservation trouvée</div>;
@@ -82,8 +212,14 @@ const ReservationDetails = () => {
               <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                 Modifier
               </button>
-              <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                Annuler
+              <button
+                onClick={() => handleCancelReservation(id)}
+                className="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md text-sm font-medium flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                Annuler la réservation
               </button>
             </div>
           </div>
