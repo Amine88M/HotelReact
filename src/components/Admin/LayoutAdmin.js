@@ -47,6 +47,14 @@ function LayoutAdmin() {
                   <MdPersonAdd className="mr-3 text-2xl text-green-400 group-hover:text-white" />
                   <span className="group-hover:text-white">Créer un Compte</span>
                 </Link>
+
+                <Link 
+                  to="/admin/create-user" 
+                  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
+                >
+                  <MdPersonAdd className="mr-3 text-2xl text-green-400 group-hover:text-white" />
+                  <span className="group-hover:text-white">Créer un Service</span>
+                </Link>
                 
                 <Link 
                   to="/admin/users" 
@@ -62,17 +70,17 @@ function LayoutAdmin() {
       className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
     >
       {/* Icône de lit */}
-      <MdBed className="mr-3 text-2xl text-yellow-400 group-hover:text-white" />
+      <MdBed className="mr-3 text-2xl text-purple-400 group-hover:text-white" />
       <span className="group-hover:text-white">Créer une chambre</span>
     </Link>
 
-                <Link 
+                {/* <Link 
                   to="/admin/roles" 
                   className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
                 >
                   <MdSecurity className="mr-3 text-2xl text-purple-400 group-hover:text-white" />
                   <span className="group-hover:text-white">Attribuer Rôles</span>
-                </Link>
+                </Link> */}
                 
                 <Link 
                   to="/admin/reset-password" 

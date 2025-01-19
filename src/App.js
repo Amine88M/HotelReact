@@ -65,6 +65,10 @@ function App() {
           <Route path="checkInModal" element={<CheckInModal />} />
           <Route path="checkOutModal" element={<CheckOutModal />} />
           <Route path="details/:id" element={<Details />} />
+          <Route path="reserver-services" element={<ReserverServices />} />
+
+          
+
         </Route>
       </Routes>
     </Router>
