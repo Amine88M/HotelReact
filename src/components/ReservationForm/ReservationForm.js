@@ -153,20 +153,24 @@ function ReservationForm() {
       return;
     }
   
-    // Préparer les données à envoyer à l'API
-    const dataToSend = {
-      ...formData,
-      Nom: formData.Nom,
-      DateCheckIn: `${formData.DateCheckIn}T00:00:00`,
-      DateCheckOut: `${formData.DateCheckOut}T00:00:00`,
-      NombreAdults: Number(formData.NombreAdults),
-      NombreEnfants: Number(formData.NombreEnfants),
-      id_Type_Chambre: Number(formData.id_Type_Chambre),
-      PrixTotal: calculerPrixTotal(),
-    };
-  
     try {
-      const response = await fetch('https://localhost:7141/api/reservations', {
+      // Préparer les données à envoyer à l'API
+      const dataToSend = {
+        ...formData,
+        Nom: formData.Nom,
+        DateCheckIn: `${formData.DateCheckIn}T00:00:00`,
+        DateCheckOut: `${formData.DateCheckOut}T00:00:00`,
+        NombreAdults: Number(formData.NombreAdults),
+        NombreEnfants: Number(formData.NombreEnfants),
+        id_Type_Chambre: Number(formData.id_Type_Chambre),
+        PrixTotal: calculerPrixTotal(),
+      };
+
+      // Log des données avant envoi
+      console.log('Données à envoyer à l\'API de réservation:', dataToSend);
+
+      // Première étape : créer la réservation
+      const reservationResponse = await fetch('https://localhost:7141/api/reservations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,32 +178,66 @@ function ReservationForm() {
         },
         body: JSON.stringify(dataToSend),
       });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Erreur détaillée:', errorData);
-        throw new Error(errorData.message || 'Erreur lors de la création de la réservation');
+
+      if (!reservationResponse.ok) {
+        throw new Error('Erreur lors de la création de la réservation');
       }
-  
-      const result = await response.json();
-      console.log('Réponse de l\'API:', result);
-  
-      // Afficher un message de succès
+
+      const result = await reservationResponse.json();
+      console.log('Réponse complète:', result);
+
+      // Extraire l'ID de la réservation de la réponse
+      const reservationId = result.reservation.id;
+      console.log('ID de la réservation:', reservationId);
+
+      if (!reservationId) {
+        throw new Error('ID de réservation non disponible dans la réponse');
+      }
+
+      // Créer le paiement avec l'ID récupéré
+      const paiementData = {
+        ReservationId: parseInt(reservationId),
+        Montant: parseFloat(formData.PrixTotal),
+        MethodPaiement: formData.ModePaiement === 'carte' ? 'Carte Bancaire' : 
+                       formData.ModePaiement === 'especes' ? 'Espèces' :
+                       formData.ModePaiement === 'cheque' ? 'Chèque' : 
+                       'Lien de Paiement',
+        DatePaiement: new Date().toISOString(),
+        StatutPaiement: 0
+      };
+
+      console.log('Données paiement à envoyer:', paiementData);
+
+      const paiementResponse = await fetch('https://localhost:7141/api/paiements', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paiementData)
+      });
+
+      if (!paiementResponse.ok) {
+        const errorData = await paiementResponse.json();
+        console.error('Erreur paiement détaillée:', errorData);
+        throw new Error(errorData.message || 'Erreur lors de l\'enregistrement du paiement');
+      }
+
+      // Si tout s'est bien passé
       Swal.fire({
         title: 'Succès!',
-        text: 'La réservation a été créée avec succès',
+        text: 'La réservation et le paiement ont été créés avec succès',
         icon: 'success',
         confirmButtonColor: '#8CD4B9',
       }).then(() => {
         navigate('/Receptionist/reservations');
       });
+
     } catch (error) {
       console.error('Erreur complète:', error);
-  
-      // Afficher un message d'erreur
+      
       Swal.fire({
         title: 'Erreur!',
-        text: error.message || 'Impossible de créer la réservation. Veuillez vérifier les données saisies.',
+        text: error.message || 'Une erreur est survenue lors de la création de la réservation.',
         icon: 'error',
         confirmButtonColor: '#F8B1A5',
       });

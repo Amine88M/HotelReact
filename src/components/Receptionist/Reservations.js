@@ -93,6 +93,15 @@ export default function Reservations() {
     }
   }, [filteredReservations, selectedType, selectedStatut, searchTerm]);
 
+  // Rediriger vers la page de création de réservation
+  const handleCreateReservation = () => {
+    navigate('/Receptionist/create-reservation');
+  };
+
+  // Rediriger vers la page de détails d'une réservation
+  const handleViewReservationDetails = (reservationId) => {
+    navigate(`/receptionist/details/${reservationId}`);
+  };
   // Réinitialiser les filtres
   /*const resetFilters = () => {
     setSelectedType(null);
@@ -110,18 +119,7 @@ export default function Reservations() {
   };
 
   // Supprimer les réservations sélectionnées
-  const handleDeleteSelected = async () => {
-    if (selectedIds.length === 0) {
-      Swal.fire({
-        title: 'Aucune sélection',
-        text: 'Veuillez sélectionner au moins une réservation à supprimer.',
-        icon: 'warning',
-        confirmButtonColor: '#3085d6',
-      });
-      return;
-    }
-
-    // Confirmer la suppression
+  const handleDeleteSelected = () => {
     Swal.fire({
       title: 'Êtes-vous sûr ?',
       text: 'Cette action supprimera les réservations sélectionnées !',
@@ -133,28 +131,53 @@ export default function Reservations() {
       cancelButtonText: 'Annuler',
     }).then(async (result) => {
       if (result.isConfirmed) {
-        try {
-          const response = await fetch('https://localhost:7141/api/reservations/deleteselected', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(selectedIds),
-          });
-
-          if (response.ok) {
-            setReservations((prevReservations) =>
-              prevReservations.filter((reservation) => !selectedIds.includes(reservation.id))
-            );
-            setSelectedIds([]);
-            Swal.fire('Supprimé !', 'Les réservations sélectionnées ont été supprimées.', 'success');
-          } else {
-            const errorText = await response.text();
-            throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
+        // Demander le mot de passe
+        const { value: password } = await Swal.fire({
+          title: 'Authentification requise',
+          text: 'Veuillez entrer le mot de passe pour confirmer la suppression',
+          input: 'password',
+          inputPlaceholder: 'Entrez le mot de passe',
+          inputAttributes: {
+            autocapitalize: 'off',
+            autocorrect: 'off'
+          },
+          showCancelButton: true,
+          confirmButtonText: 'Confirmer',
+          cancelButtonText: 'Annuler',
+          confirmButtonColor: '#d33',
+          preConfirm: (inputPassword) => {
+            if (inputPassword === '123Abc') {
+              return inputPassword;
+            }
+            Swal.showValidationMessage('Mot de passe incorrect');
+            return false;
           }
-        } catch (error) {
-          console.error('Erreur:', error);
-          Swal.fire('Erreur !', error.message || 'Une erreur s\'est produite lors de la suppression.', 'error');
+        });
+
+        if (password) {
+          try {
+            const response = await fetch('https://localhost:7141/api/reservations/deleteselected', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(selectedIds),
+            });
+
+            if (response.ok) {
+              setReservations((prevReservations) =>
+                prevReservations.filter((reservation) => !selectedIds.includes(reservation.id))
+              );
+              setSelectedIds([]);
+              Swal.fire('Supprimé !', 'Les réservations sélectionnées ont été supprimées.', 'success');
+            } else {
+              const errorText = await response.text();
+              throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
+            }
+          } catch (error) {
+            console.error('Erreur:', error);
+            Swal.fire('Erreur !', error.message || 'Une erreur s\'est produite lors de la suppression.', 'error');
+          }
         }
       }
     });
@@ -163,6 +186,57 @@ export default function Reservations() {
   // Annuler une réservation
   const handleCancelReservation = async (id) => {
     try {
+      // Vérifier d'abord si la réservation est déjà annulée
+      const reservation = reservations.find(r => r.id === id);
+      if (reservation.statut === "Annulée") {
+        Swal.fire({
+          title: 'Information',
+          text: 'Cette réservation est déjà annulée.',
+          icon: 'info',
+          confirmButtonColor: '#3085d6',
+        });
+        return;
+      }
+
+      // Première confirmation avec texte à saisir
+      const firstConfirm = await Swal.fire({
+        title: 'Attention!',
+        text: 'Écrivez "ANNULER" en majuscules pour confirmer',
+        input: 'text',
+        inputPlaceholder: 'ANNULER',
+        showCancelButton: true,
+        confirmButtonText: 'Continuer',
+        cancelButtonText: 'Retour',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        inputValidator: (value) => {
+          if (value !== 'ANNULER') {
+            return 'Veuillez écrire exactement "ANNULER"';
+          }
+        }
+      });
+
+      if (!firstConfirm.isConfirmed) {
+        return;
+      }
+
+      // Deuxième confirmation finale
+      const finalConfirm = await Swal.fire({
+        title: 'Dernière vérification',
+        text: "Cette action est irréversible. Êtes-vous absolument sûr de vouloir annuler cette réservation?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Oui, annuler définitivement',
+        cancelButtonText: 'Non, retour'
+      });
+
+      if (!finalConfirm.isConfirmed) {
+        return;
+      }
+
+      // Procéder à l'annulation
       const response = await fetch(`https://localhost:7141/api/reservations/annulerreservation`, {
         method: 'POST',
         headers: {
@@ -200,11 +274,13 @@ export default function Reservations() {
     }
   };
 
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-semibold text-gray-800">Liste des Réservations</h1>
         <div className="flex gap-2">
+         
           <input
             type="text"
             placeholder="Rechercher par numéro, nom ou prénom..."
@@ -283,8 +359,26 @@ export default function Reservations() {
           <button
             onClick={handleDeleteSelected}
             disabled={selectedIds.length === 0}
-            className="px-4 py-2 text-sm font-medium text-red-600 bg-red-100 rounded-lg hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex items-center px-3 py-1 rounded-md text-sm font-medium ${
+              selectedIds.length === 0 
+                ? 'bg-red-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-red-600 hover:bg-red-700 text-white cursor-pointer'
+            }`}
           >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className={`h-5 w-5 mr-2 ${
+                selectedIds.length === 0 ? 'text-gray-400' : 'text-white'
+              }`}
+              viewBox="0 0 20 20" 
+              fill="currentColor"
+            >
+              <path 
+                fillRule="evenodd" 
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" 
+                clipRule="evenodd" 
+              />
+            </svg>
             Supprimer la sélection
           </button>
         </div>
@@ -385,7 +479,7 @@ export default function Reservations() {
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm">
                     <button
-                  //    onClick={() => handleViewReservationDetails(reservation.id)}
+                      onClick={() => handleViewReservationDetails(reservation.id)}
                       className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md text-sm font-medium mr-2"
                     >
                       Détails

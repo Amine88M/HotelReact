@@ -149,6 +149,12 @@ const CreateUser  = () => {
       });
       setSelectedFile(null);
       setPreviewUrl(null);
+
+      // Faire disparaître le message après 5 secondes
+      setTimeout(() => {
+        setSuccess('');
+      }, 5000);
+
     } catch (err) {
       console.error('Erreur complète:', err);
       setApiError(err.message);
@@ -211,7 +217,7 @@ const CreateUser  = () => {
               value={formData.phoneNumber} 
               onChange={handleChange} 
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-              placeholder="+33 X XX XX XX XX" 
+              placeholder="+212 X XX XX XX XX" 
             />
             {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
           </div>

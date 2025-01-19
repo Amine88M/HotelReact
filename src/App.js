@@ -14,12 +14,14 @@ import Dashboard from './components/Receptionist/Dashboard';
 import CheckIn from './components/Receptionist/CheckIn';
 import CheckOut from './components/Receptionist/CheckOut';
 import ProtectedRoute from './components/ProtectedRoute';
+import Details from './components/Receptionist/Details';
 
 import CreateChambre from './components/Chambres/CreateChambre';
 
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
 import ReserverServices from './components/InterfaceService/ReserverServices';
+
 import CreateService from './components/InterfaceService/CreateService';
 
 import './App.css';
@@ -40,7 +42,7 @@ function App() {
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         </Route>
-       
+        <Route path="create-service" element={<CreateService />} />
         <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
         
         {/* Protected Receptionist Routes */}
@@ -60,14 +62,11 @@ function App() {
           <Route path="today-reservations" element={<TodayReservations />} />
           <Route path="reservations" element={<Reservations />} />
           <Route path="create-reservation" element={<ReservationForm />} />
-
-
           <Route path="chambres" element={<Chambre />} />
-
-
-          <Route path="chambres" element={ <Chambre />} />
+          <Route path="reserver-services" element={<ReserverServices />} />
           <Route path="checkInModal" element={<CheckInModal />} />
           <Route path="checkOutModal" element={<CheckOutModal />} />
+          <Route path="details/:id" element={<Details />} />
           <Route path="reserver-services" element={<ReserverServices />} />
 
           
