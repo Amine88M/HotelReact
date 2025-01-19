@@ -200,6 +200,10 @@ export default function Reservations() {
     }
   };
 
+  const handleViewReservationDetails = (reservationId) => {
+    navigate(`/receptionist/details/${reservationId}`);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
@@ -385,7 +389,7 @@ export default function Reservations() {
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm">
                     <button
-                  //    onClick={() => handleViewReservationDetails(reservation.id)}
+                      onClick={() => handleViewReservationDetails(reservation.id)}
                       className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md text-sm font-medium mr-2"
                     >
                       Détails

@@ -14,12 +14,14 @@ import Dashboard from './components/Receptionist/Dashboard';
 import CheckIn from './components/Receptionist/CheckIn';
 import CheckOut from './components/Receptionist/CheckOut';
 import ProtectedRoute from './components/ProtectedRoute';
+import Details from './components/Receptionist/Details';
 
 import CreateChambre from './components/Chambres/CreateChambre';
 
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
 
+import ReserverServices from './components/InterfaceServices/ReserverServices';
 
 import './App.css';
 
@@ -58,15 +60,11 @@ function App() {
           <Route path="today-reservations" element={<TodayReservations />} />
           <Route path="reservations" element={<Reservations />} />
           <Route path="create-reservation" element={<ReservationForm />} />
-
-
           <Route path="chambres" element={<Chambre />} />
-
-
-          <Route path="chambres" element={ <Chambre />} />
+          <Route path="reserver-services" element={<ReserverServices />} />
           <Route path="checkInModal" element={<CheckInModal />} />
           <Route path="checkOutModal" element={<CheckOutModal />} />
-
+          <Route path="details/:id" element={<Details />} />
         </Route>
       </Routes>
     </Router>
