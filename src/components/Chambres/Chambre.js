@@ -115,6 +115,8 @@ export default function Chambre() {
   };
 
   // Supprimer les chambres sélectionnées
+  
+  
   const handleDeleteSelected = async () => {
     if (selectedIds.length === 0) {
       Swal.fire({
@@ -139,7 +141,7 @@ export default function Chambre() {
       if (result.isConfirmed) {
         try {
           const response = await fetch('https://localhost:7141/api/chambre/deleteselected', {
-            method: 'DELETE',
+            method: 'POST', // Utiliser POST au lieu de DELETE
             headers: {
               'Content-Type': 'application/json',
             },
@@ -163,7 +165,6 @@ export default function Chambre() {
         }
       }
     });
-  
   };
     
   

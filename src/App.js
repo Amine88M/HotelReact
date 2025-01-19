@@ -20,6 +20,7 @@ import CreateChambre from './components/Chambres/CreateChambre';
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
 import ReserverServices from './components/InterfaceService/ReserverServices';
+import CreateService from './components/InterfaceService/CreateService';
 
 import './App.css';
 
@@ -35,6 +36,7 @@ function App() {
           <Route path="users/edit/:id" element={<EditUser />} />
           <Route path="create-user" element={<CreateUserPage />} />
           <Route path="create-chambre" element={<CreateChambre />} />
+          <Route path="create-service" element={<CreateService />} />
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         </Route>

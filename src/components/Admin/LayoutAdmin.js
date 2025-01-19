@@ -5,6 +5,8 @@ import { FiMenu, FiChevronLeft } from 'react-icons/fi';
 import { MdDashboard, MdPersonAdd, MdPeople, MdSecurity, MdPassword, MdLogout } from 'react-icons/md';
 import { MdBed } from 'react-icons/md'; // Icône de lit pour représenter une chambre
 
+import { FaCogs } from 'react-icons/fa';
+
 function LayoutAdmin() {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -48,14 +50,24 @@ function LayoutAdmin() {
                   <span className="group-hover:text-white">Créer un Compte</span>
                 </Link>
 
-                <Link 
-                  to="/admin/create-user" 
-                  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
-                >
-                  <MdPersonAdd className="mr-3 text-2xl text-green-400 group-hover:text-white" />
-                  <span className="group-hover:text-white">Créer un Service</span>
-                </Link>
+                <Link
+  to="/admin/create-service"
+  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
+>
+  <FaCogs className="mr-3 text-2xl text-green-400 group-hover:text-white" />
+  <span className="group-hover:text-white">Créer un Service</span>
+</Link>
                 
+                
+                <Link
+      to="/admin/create-chambre"
+      className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
+    >
+      {/* Icône de lit */}
+      <MdBed className="mr-3 text-2xl text-purple-400 group-hover:text-white" />
+      <span className="group-hover:text-white">Créer une chambre</span>
+    </Link>
+
                 <Link 
                   to="/admin/users" 
                   className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
@@ -65,14 +77,7 @@ function LayoutAdmin() {
                 </Link>
                 
 
-                <Link
-      to="/admin/create-chambre"
-      className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
-    >
-      {/* Icône de lit */}
-      <MdBed className="mr-3 text-2xl text-purple-400 group-hover:text-white" />
-      <span className="group-hover:text-white">Créer une chambre</span>
-    </Link>
+                
 
                 {/* <Link 
                   to="/admin/roles" 
