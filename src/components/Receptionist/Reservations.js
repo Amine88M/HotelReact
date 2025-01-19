@@ -93,6 +93,15 @@ export default function Reservations() {
     }
   }, [filteredReservations, selectedType, selectedStatut, searchTerm]);
 
+  // Rediriger vers la page de création de réservation
+  const handleCreateReservation = () => {
+    navigate('/Receptionist/create-reservation');
+  };
+
+  // Rediriger vers la page de détails d'une réservation
+  const handleViewReservationDetails = (id) => {
+    navigate(`/reservations/${id}`);
+  };
   // Réinitialiser les filtres
   /*const resetFilters = () => {
     setSelectedType(null);
