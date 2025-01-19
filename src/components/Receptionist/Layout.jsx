@@ -9,29 +9,64 @@ export default function Layout({ children }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState(null);
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    setUserRole(role);
 
     if (userId) {
-      fetch(`https://localhost:7141/api/user/${userId}/photo`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Erreur de chargement de la photo');
-        return response.blob();
-      })
-      .then(blob => {
-        setProfilePhoto(URL.createObjectURL(blob));
-      })
-      .catch(error => {
-        console.error('Erreur:', error);
-      });
+      fetchProfilePhoto(userId, token);
     }
   }, []);
+
+  const fetchProfilePhoto = (userId, token) => {
+    fetch(`https://localhost:7141/api/user/${userId}/photo`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Erreur de chargement de la photo');
+      return response.blob();
+    })
+    .then(blob => {
+      setProfilePhoto(URL.createObjectURL(blob));
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+    });
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    try {
+      // Upload nouvelle photo
+      const response = await fetch(`https://localhost:7141/api/user/${userId}/upload-photo`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) throw new Error('Erreur lors de l\'upload');
+
+      // Recharger la photo
+      fetchProfilePhoto(userId, token);
+    } catch (error) {
+      console.error('Erreur:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
