@@ -71,7 +71,7 @@ export default function Reservations() {
 
   // Rediriger vers la page de création de réservation
   const handleCreateReservation = () => {
-    navigate('/reservations/create-form');
+    navigate('/Receptionist/create-reservation');
   };
 
   // Rediriger vers la page de détails d'une réservation
@@ -184,6 +184,12 @@ export default function Reservations() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-semibold text-gray-800">Liste des Réservations</h1>
         <div className="flex gap-2">
+          <button
+            onClick={handleCreateReservation}
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            Nouvelle Réservation
+          </button>
           <input
             type="text"
             placeholder="Rechercher par numéro, nom ou prénom..."
