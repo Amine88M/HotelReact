@@ -19,7 +19,7 @@ import CreateChambre from './components/Chambres/CreateChambre';
 
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
-
+import ReserverServices from './components/InterfaceService/ReserverServices';
 
 import './App.css';
 
@@ -66,6 +66,9 @@ function App() {
           <Route path="chambres" element={ <Chambre />} />
           <Route path="checkInModal" element={<CheckInModal />} />
           <Route path="checkOutModal" element={<CheckOutModal />} />
+          <Route path="reserver-services" element={<ReserverServices />} />
+
+          
 
         </Route>
       </Routes>

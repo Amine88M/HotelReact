@@ -174,11 +174,14 @@ export default function Layout({ children }) {
               </Link>
             </li>
             <li>
-              <Link to="/Receptionist/services" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
-                <Settings className="w-5 h-5 text-gray-500" /> {/* Icône pour "Services" */}
+              <Link to="/Receptionist/reserver-services" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+                <Settings className="w-5 h-5 text-gray-500" /> 
+                {/* Icône pour "Services" */}
                 <span className="ml-3">Services</span>
               </Link>
             </li>
+
+            
             <li>
               <Link to="/Receptionist/reservations" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
                 <CalendarCheck className="w-5 h-5 text-gray-500" />
