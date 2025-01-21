@@ -281,6 +281,147 @@ const ReservationDetails = () => {
     }
   };
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Détails de la Réservation - ${reservation.id}</title>
+          <style>
+            body {
+              font-family: 'Arial', sans-serif;
+              line-height: 1.6;
+              color: #333;
+              margin: 20px;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 2px solid #3498db;
+            }
+            .logo {
+              font-size: 24px;
+              color: #3498db;
+              margin-bottom: 10px;
+            }
+            .section {
+              margin-bottom: 20px;
+              padding: 15px;
+              border: 1px solid #ddd;
+              border-radius: 5px;
+            }
+            .section-title {
+              font-size: 18px;
+              color: #2c3e50;
+              margin-bottom: 10px;
+              border-bottom: 1px solid #eee;
+              padding-bottom: 5px;
+            }
+            .detail-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+            }
+            .payment-status {
+              font-weight: bold;
+              padding: 4px 8px;
+              border-radius: 4px;
+            }
+            .status-paid {
+              color: #27ae60;
+            }
+            .status-pending {
+              color: #f39c12;
+            }
+            .status-cancelled {
+              color: #e74c3c;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">🏨 RoyalStay</div>
+            <h1>Détails de la Réservation #${reservation.id}</h1>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Informations Client</h2>
+            <div class="detail-row">
+              <span>Nom complet:</span>
+              <span>${reservation.nom} ${reservation.prenom}</span>
+            </div>
+            <div class="detail-row">
+              <span>Téléphone:</span>
+              <span>${reservation.telephone}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Détails du Séjour</h2>
+            <div class="detail-row">
+              <span>Check-in:</span>
+              <span>${new Date(reservation.dateCheckIn).toLocaleDateString('fr-FR')}</span>
+            </div>
+            <div class="detail-row">
+              <span>Check-out:</span>
+              <span>${new Date(reservation.dateCheckOut).toLocaleDateString('fr-FR')}</span>
+            </div>
+            <div class="detail-row">
+              <span>Occupants:</span>
+              <span>${reservation.nombreAdults} adultes, ${reservation.nombreEnfants} enfants</span>
+            </div>
+            <div class="detail-row">
+              <span>Statut:</span>
+              <span>${reservation.statut}</span>
+            </div>
+          </div>
+
+          ${paiement ? `
+            <div class="section">
+              <h2 class="section-title">Détails du Paiement</h2>
+              <div class="detail-row">
+                <span>Montant total:</span>
+                <span>${paiement[0].montant} €</span>
+              </div>
+              <div class="detail-row">
+                <span>Méthode de paiement:</span>
+                <span>${paiement[0].methodPaiement}</span>
+              </div>
+              <div class="detail-row">
+                <span>Date de paiement:</span>
+                <span>${new Date(paiement[0].datePaiement).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</span>
+              </div>
+              <div class="detail-row">
+                <span>Statut du paiement:</span>
+                <span class="payment-status status-paid">Payé</span>
+              </div>
+              <div class="detail-row">
+                <span>Référence paiement:</span>
+                <span>#${paiement[0].idPaiement}</span>
+              </div>
+            </div>
+          ` : `
+            <div class="section">
+              <h2 class="section-title">Détails du Paiement</h2>
+              <div class="detail-row">
+                <span>Aucun paiement enregistré pour cette réservation</span>
+              </div>
+            </div>
+          `}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   if (loading) return <div>Chargement...</div>;
   if (error) return <div>Erreur: {error}</div>;
   if (!reservation) return <div>Aucune réservation trouvée</div>;
@@ -308,8 +449,12 @@ const ReservationDetails = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Modifier
+              <button 
+                onClick={handlePrint}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <i className="fas fa-print"></i>
+                Imprimer
               </button>
             </div>
           </div>
@@ -424,16 +569,7 @@ const ReservationDetails = () => {
 
                   <div className="flex justify-between items-center py-2 border-b">
                     <span className="text-gray-700">Statut du paiement</span>
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      paiement[0].statutPaiement === 0 
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : paiement[0].statutPaiement === 1
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {paiement[0].statutPaiement === 0 ? 'En attente' :
-                       paiement[0].statutPaiement === 1 ? 'Payé' : 'Annulé'}
-                    </span>
+                    <span className="font-medium text-green-600">Payé</span>
                   </div>
 
                   <div className="flex justify-between items-center py-2 border-b">
