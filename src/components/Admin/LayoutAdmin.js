@@ -50,6 +50,14 @@ function LayoutAdmin() {
                   <span className="group-hover:text-white">Créer un Compte</span>
                 </Link>
 
+
+                <Link
+  to="/admin/consulter-service"
+  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
+>
+  <FaCogs className="mr-3 text-2xl text-green-400 group-hover:text-white" />
+  <span className="group-hover:text-white">Consulter Services</span>
+</Link>
                 <Link
   to="/admin/create-service"
   className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
@@ -78,13 +86,7 @@ function LayoutAdmin() {
                 
 
                 
-                <Link
-  to="/admin/create-service"
-  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
->
-  <FaCogs className="mr-3 text-2xl text-green-400 group-hover:text-white" />
-  <span className="group-hover:text-white">Service</span>
-</Link>
+                
             
 
                 {/* <Link 

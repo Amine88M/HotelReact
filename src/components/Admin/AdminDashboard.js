@@ -88,6 +88,26 @@ const AdminDashboard = () => {
       return;
     }
 
+    // Vérifier si on essaie de supprimer des admins
+    const selectedAdmins = users.filter(user => 
+      selectedUsers.includes(user.id) && user.role.toLowerCase() === 'admin'
+    );
+
+    const totalAdmins = users.filter(user => 
+      user.role.toLowerCase() === 'admin'
+    ).length;
+
+    // Si la suppression laisserait 0 admin, empêcher l'action
+    if (selectedAdmins.length > 0 && totalAdmins - selectedAdmins.length < 1) {
+      Swal.fire({
+        title: 'Action impossible',
+        text: 'Il doit rester au moins un administrateur dans le système.',
+        icon: 'error',
+        confirmButtonColor: '#3085d6',
+      });
+      return;
+    }
+
     // Première confirmation
     const firstConfirm = await Swal.fire({
       title: 'Êtes-vous sûr ?',

@@ -151,7 +151,7 @@ export default function ReservationPage() {
           <DatePicker
             selected={selectedDate}
             onChange={(date) => setSelectedDate(date)}
-            dateFormat="dd/MM/yyyy"
+            dateFormat="dd/MM/yyyy" // Format court de la date (ex: "10/10/2023")
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -172,7 +172,7 @@ export default function ReservationPage() {
               <option value="">Heure</option>
               {hours.map((hour) => (
                 <option key={hour} value={hour}>
-                  {hour}
+                  {hour}h {/* Ajout du suffixe "h" */}
                 </option>
               ))}
             </select>
