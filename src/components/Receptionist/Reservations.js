@@ -18,6 +18,7 @@ export default function Reservations() {
     1: "Simple",
     2: "Double",
     3: "Suite",
+    4:"Familiale"
   };
 
   const statutsReservation = {

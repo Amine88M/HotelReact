@@ -74,7 +74,8 @@ function ReservationForm() {
   }, [formData.id_Type_Chambre, formData.DateCheckIn, formData.DateCheckOut, typeChambres]);
 
   // Gérer la soumission du formulaire
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => 
+  {
     e.preventDefault();
   
     // Vérifier que le mode de paiement est sélectionné

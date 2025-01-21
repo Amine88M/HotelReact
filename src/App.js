@@ -15,6 +15,7 @@ import CheckIn from './components/Receptionist/CheckIn';
 import CheckOut from './components/Receptionist/CheckOut';
 import ProtectedRoute from './components/ProtectedRoute';
 import Details from './components/Receptionist/Details';
+import ChambreList from "./ChambreListe";
 
 import CreateChambre from './components/Chambres/CreateChambre';
 
@@ -68,6 +69,9 @@ function App() {
           <Route path="checkOutModal" element={<CheckOutModal />} />
           <Route path="details/:id" element={<Details />} />
           <Route path="reserver-services" element={<ReserverServices />} />
+          <Route path="chambres-disponibles" element={<ChambreList />} />
+          
+   
 
           
 

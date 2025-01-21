@@ -70,7 +70,7 @@ const Login = () => {
               navigate('/admin');
               break;
             case 'Receptionist':
-              navigate('/Receptionist');
+              navigate('/Receptionist/dashboard');
               break;
             case 'Personnel De Menage':
               navigate('/PersonnelDeMenage');

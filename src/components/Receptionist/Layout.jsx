@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, LogIn, LogOut, Menu, BedDouble, UserCircle, X, Camera, Key, CalendarCheck ,Settings} from 'lucide-react';
 import { Link,Outlet} from 'react-router-dom';
 import Profile from '../Profile/Profile';
-
+import { FaBed } from "react-icons/fa";
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -181,12 +181,28 @@ export default function Layout({ children }) {
               </Link>
             </li>
            
+
             <li>
               <Link to="/Receptionist/reservations" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
                 <CalendarCheck className="w-5 h-5 text-gray-500" />
                 <span className="ml-3">Reservations</span>
               </Link>
             </li>
+
+
+
+            <li>
+      <Link
+        to="/Receptionist/chambres-disponibles"
+        className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100"
+      >
+        <FaBed className="w-5 h-5 text-gray-500" /> {/* Utilisation de l'icône Bed */}
+        <span className="ml-3">Chambres Disponibles</span>
+      </Link>
+    </li>
+
+
+           
           </ul>
         </div>
       </aside>

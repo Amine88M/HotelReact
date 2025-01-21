@@ -98,13 +98,6 @@ export default function Chambre() {
     }
   }, [filteredChambres, selectedType, selectedStatut, searchTerm]);
 
-  // Réinitialiser les filtres
-  const resetFilters = () => {
-    setSelectedType(null);
-    setSelectedStatut(null);
-    setSearchTerm('');
-  };
-
   // Gérer la sélection/désélection des chambres
   const handleRowCheckboxChange = (id) => {
     setSelectedIds((prevSelectedIds) =>
@@ -115,8 +108,6 @@ export default function Chambre() {
   };
 
   // Supprimer les chambres sélectionnées
-  
-  
   const handleDeleteSelected = async () => {
     if (selectedIds.length === 0) {
       Swal.fire({
@@ -127,7 +118,7 @@ export default function Chambre() {
       });
       return;
     }
-  
+
     Swal.fire({
       title: 'Êtes-vous sûr ?',
       text: 'Cette action supprimera les chambres sélectionnées !',
@@ -147,7 +138,7 @@ export default function Chambre() {
             },
             body: JSON.stringify(selectedIds), // Envoyer les IDs sélectionnés
           });
-  
+
           if (response.ok) {
             // Mettre à jour l'état local en filtrant les chambres supprimées
             setChambres((prevChambres) =>
@@ -166,8 +157,6 @@ export default function Chambre() {
       }
     });
   };
-    
-  
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -181,7 +170,6 @@ export default function Chambre() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-
 
           <div className="relative">
             <button
@@ -241,12 +229,6 @@ export default function Chambre() {
               </div>
             )}
           </div>
-          <button
-            onClick={resetFilters}
-            className="px-4 py-2 text-sm font-medium text-gray-800 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-          >
-            Réinitialiser
-          </button>
           <button
             onClick={handleDeleteSelected}
             disabled={selectedIds.length === 0}

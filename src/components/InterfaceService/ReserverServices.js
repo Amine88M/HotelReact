@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCar, FaSpa, FaUtensils, FaParking, FaDumbbell,FaQuestionCircle } from 'react-icons/fa';
+import { FaCar, FaSpa, FaUtensils, FaParking, FaDumbbell, FaQuestionCircle } from 'react-icons/fa';
 
 export default function ReserverServices() {
   const [selectedService, setSelectedService] = useState(null);
@@ -52,7 +52,7 @@ export default function ReserverServices() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Réserver Services</h1>
+      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Consulter Services</h1>
 
       {/* Afficher dynamiquement les services */}
       {services.map((service) => (
@@ -66,12 +66,6 @@ export default function ReserverServices() {
               <p className="text-gray-600">{service.description || "Description non disponible"}</p>
               <p className="text-gray-800 font-semibold mt-2">Tarif: MAD {service.tarif || "N/A"}</p>
             </div>
-            <button
-              onClick={() => setSelectedService(service)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Réserver maintenant
-            </button>
           </div>
         </div>
       ))}
