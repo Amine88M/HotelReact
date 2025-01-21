@@ -30,6 +30,7 @@ export default function CheckinModal() {
   const [selectedServices, setSelectedServices] = useState([]); // Track selected services
   const [totalAmount, setTotalAmount] = useState(0); // Total amount based on services
   const [selectedDateTime, setSelectedDateTime] = useState(''); // Track selected date and time
+  const [selectedRoomNumber, setSelectedRoomNumber] = useState(null);
 
   const services = [
     { id_Service: 1, nom_Service: 'Taxi', icon: <FaTaxi />, tarif: 50 },
@@ -47,10 +48,12 @@ export default function CheckinModal() {
     const fetchTodayCheckIns = async () => {
       try {
         const response = await fetch('https://localhost:7141/api/Reservations/today-checkins');
+        console.log('Fetching today\'s check-ins - Response:', response); // Debugging
         if (!response.ok) {
           throw new Error('Failed to fetch today\'s check-ins');
         }
         const data = await response.json();
+        console.log('Fetched today\'s check-ins - Data:', data); // Debugging
         setReservations(data);
       } catch (error) {
         console.error('Error:', error);
@@ -71,10 +74,12 @@ export default function CheckinModal() {
     const fetchAvailableRooms = async () => {
       try {
         const response = await fetch('https://localhost:7141/api/chambre/disponibles');
+        console.log('Fetching available rooms - Response:', response); // Debugging
         if (!response.ok) {
           throw new Error('Failed to fetch available rooms');
         }
         const data = await response.json();
+        console.log('Fetched available rooms - Data:', data); // Debugging
         setAvailableRooms(data);
       } catch (error) {
         console.error('Error:', error);
@@ -97,6 +102,7 @@ export default function CheckinModal() {
 
   // Handle reservation selection
   const handleReservationSelect = (reservation) => {
+    console.log('Selected Reservation:', reservation); // Debugging
     setSelectedReservation(reservation);
 
     // Initialize additional guests based on the number of adults in the reservation
@@ -106,6 +112,7 @@ export default function CheckinModal() {
       cin: '', // CIN field is empty initially
     }));
 
+    console.log('Initialized Additional Guests:', newAdditionalGuests); // Debugging
     setAdditionalGuests(newAdditionalGuests);
   };
 
@@ -118,6 +125,7 @@ export default function CheckinModal() {
 
   // Handle service selection
   const handleServiceSelect = (service) => {
+    console.log('Selected Service:', service); // Debugging
     setSelectedService(service);
     setShowServiceModal(true);
   };
@@ -126,12 +134,16 @@ export default function CheckinModal() {
   const handleServiceDateTimeSelect = async () => {
     if (!selectedReservation || !selectedService || !selectedDateTime) return;
 
-    // Validate that the selected date and time are within the reservation's check-in and check-out dates
     const selectedDate = new Date(selectedDateTime);
     const checkInDate = new Date(selectedReservation.dateCheckIn);
     const checkOutDate = new Date(selectedReservation.dateCheckOut);
 
+    console.log('Selected Date:', selectedDate); // Debugging
+    console.log('Check-In Date:', checkInDate); // Debugging
+    console.log('Check-Out Date:', checkOutDate); // Debugging
+
     if (selectedDate < checkInDate || selectedDate > checkOutDate) {
+      console.log('Selected date is outside the reservation period'); // Debugging
       Swal.fire({
         title: 'Error!',
         text: 'Selected date and time must be between check-in and check-out dates.',
@@ -141,36 +153,42 @@ export default function CheckinModal() {
       return;
     }
 
-    // Add the selected service to the list
     const newService = {
       ...selectedService,
-      date: selectedDate.toISOString().split('T')[0], // Extract date part
-      heure: selectedDate.toTimeString().split(' ')[0], // Extract time part
-      quantite_Service: 1, // Default quantity
+      date: selectedDate.toISOString().split('T')[0],
+      heure: selectedDate.toTimeString().split(' ')[0],
+      quantite_Service: 1,
     };
 
+    console.log('Adding New Service:', newService); // Debugging
     setSelectedServices([...selectedServices, newService]);
     setShowServiceModal(false);
-    setSelectedDateTime(''); // Reset selected date and time
+    setSelectedDateTime('');
   };
 
   // Calculate total amount based on selected services and caution
   useEffect(() => {
     const servicesTotal = selectedServices.reduce((sum, service) => sum + service.tarif * service.quantite_Service, 0);
-    const total = servicesTotal + parseFloat(cautionValue || 0); // Add caution value to the total
+    const total = servicesTotal + parseFloat(cautionValue || 0);
+    console.log('Calculated Total Amount:', total); // Debugging
     setTotalAmount(total);
   }, [selectedServices, cautionValue]);
 
   // Handle form submission to create Sejour and Payment
   const handleSubmit = async () => {
-    if (!selectedReservation) return;
+    if (!selectedReservation || !selectedRoomNumber) {
+      console.log('No room selected');
+      Swal.fire({
+        title: 'Error!',
+        text: 'Please select a room before submitting.',
+        icon: 'error',
+        confirmButtonColor: '#F8B1A5',
+      });
+      return;
+    }
   
-    // Validate that all required fields are filled
-    if (
-      additionalGuests.some(
-        (guest) => !guest.nom || !guest.prenom || !guest.cin
-      )
-    ) {
+    if (additionalGuests.some((guest) => !guest.nom || !guest.prenom || !guest.cin)) {
+      console.log('Missing guest information');
       Swal.fire({
         title: 'Error!',
         text: 'Please fill in all guest information.',
@@ -180,21 +198,21 @@ export default function CheckinModal() {
       return;
     }
   
-    // Create a new Sejour
+    // Create the Sejour payload (without id_sejour)
     const newSejour = {
-      id_sejour: selectedReservation.id, // Use ReservationId as Id_sejour
-      reservation_Id: selectedReservation.id,
-      date_Checkin: selectedReservation.dateCheckIn,
-      date_Checkout: selectedReservation.dateCheckOut,
-      numChambre: selectedReservation.id_Type_Chambre, // Example: Use room type ID as room number
-      statut_Caution: cautionStatus, // Use selected caution status
-      montant_Total_Sejour: totalAmount, // Use calculated total amount
-      additionalGuests: additionalGuests, // Include additional guests
-      caution: cautionValue, // Include caution value
+      reservation_Id: parseInt(selectedReservation.id),
+      date_Checkin: new Date(selectedReservation.dateCheckIn).toISOString().split('T')[0],
+      date_Checkout: new Date(selectedReservation.dateCheckOut).toISOString().split('T')[0],
+      numChambre: parseInt(selectedRoomNumber),
+      statut_Caution: cautionStatus,
+      montant_Total_Sejour: parseFloat(totalAmount),
+      caution: parseFloat(cautionValue),
     };
   
-    // Send the new Sejour to the API
+    console.log('Creating Sejour - Payload:', newSejour); // Debugging
+  
     try {
+      // Step 1: Create the Sejour
       const sejourResponse = await fetch('https://localhost:7141/api/Sejour', {
         method: 'POST',
         headers: {
@@ -203,26 +221,64 @@ export default function CheckinModal() {
         body: JSON.stringify(newSejour),
       });
   
+      console.log('Sejour API Response:', sejourResponse); // Debugging
+  
       if (!sejourResponse.ok) {
+        const errorText = await sejourResponse.text(); // Get the raw response text
+        console.error('Server Error Response:', errorText); // Debugging
         throw new Error('Failed to create Sejour');
       }
   
-      // Fetch the existing payment for the reservation
+      const sejourData = await sejourResponse.json();
+      console.log('Created Sejour:', sejourData); // Debugging
+  
+      // Step 2: Create GuestInfo with the Sejour ID
+      const guestInfosPayload = additionalGuests.map(guest => ({
+        nom: guest.nom,
+        prenom: guest.prenom,
+        cin: guest.cin,
+        sejourId: sejourData.id_sejour, // Link to the newly created Sejour
+      }));
+  
+      console.log('Creating GuestInfo - Payload:', guestInfosPayload); // Debugging
+  
+      const guestsResponse = await fetch('https://localhost:7141/api/GuestInfo/Bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(guestInfosPayload),
+      });
+  
+      console.log('GuestInfo API Response:', guestsResponse); // Debugging
+  
+      if (!guestsResponse.ok) {
+        const errorText = await guestsResponse.text(); // Get the raw response text
+        console.error('Server Error Response:', errorText); // Debugging
+        throw new Error('Failed to create GuestInfo');
+      }
+  
+      // Step 3: Create Payment
       const paiementsResponse = await fetch(`https://localhost:7141/api/paiements/reservation/${selectedReservation.id}`);
+      console.log('Paiements API Response:', paiementsResponse); // Debugging
+  
       if (!paiementsResponse.ok) {
+        const errorText = await paiementsResponse.text(); // Get the raw response text
+        console.error('Server Error Response:', errorText); // Debugging
         throw new Error('Failed to fetch paiements');
       }
   
       const paiements = await paiementsResponse.json();
+      console.log('Fetched Paiements:', paiements); // Debugging
+  
       let paiement;
   
       if (paiements.length > 0) {
-        // Update the existing payment
         paiement = paiements[0];
-        paiement.Montant += parseFloat(totalAmount);
-        paiement.SejourId = selectedReservation.id;
+        paiement.montant += parseFloat(totalAmount);
+        paiement.sejourId = sejourData.id_sejour; // Link to the newly created Sejour
   
-        const updateResponse = await fetch(`https://localhost:7141/api/paiements/${paiement.IdPaiement}`, {
+        const updateResponse = await fetch(`https://localhost:7141/api/paiements/${paiement.idPaiement}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -230,18 +286,21 @@ export default function CheckinModal() {
           body: JSON.stringify(paiement),
         });
   
+        console.log('Update Paiement API Response:', updateResponse); // Debugging
+  
         if (!updateResponse.ok) {
+          const errorText = await updateResponse.text(); // Get the raw response text
+          console.error('Server Error Response:', errorText); // Debugging
           throw new Error('Failed to update Paiement');
         }
       } else {
-        // Create a new payment if it doesn't exist
         const newPayment = {
-          ReservationId: parseInt(selectedReservation.id),
-          Montant: parseFloat(totalAmount),
-          MethodPaiement: paymentMethod, // Use selected payment method
-          DatePaiement: new Date().toISOString(),
-          StatutPaiement: 1, // Assuming 1 means 'Paid'
-          SejourId: selectedReservation.id, // Link to the Sejour
+          reservationId: parseInt(selectedReservation.id),
+          montant: parseFloat(totalAmount),
+          methodPaiement: paymentMethod,
+          datePaiement: new Date().toISOString(),
+          statutPaiement: 1,
+          sejourId: sejourData.id_sejour, // Link to the newly created Sejour
         };
   
         const createResponse = await fetch('https://localhost:7141/api/paiements', {
@@ -252,14 +311,18 @@ export default function CheckinModal() {
           body: JSON.stringify(newPayment),
         });
   
+        console.log('Create Paiement API Response:', createResponse); // Debugging
+  
         if (!createResponse.ok) {
+          const errorText = await createResponse.text(); // Get the raw response text
+          console.error('Server Error Response:', errorText); // Debugging
           throw new Error('Failed to create Paiement');
         }
       }
   
       Swal.fire({
         title: 'Success!',
-        text: 'Sejour and Payment updated successfully.',
+        text: 'Sejour, GuestInfo, and Payment updated successfully.',
         icon: 'success',
         confirmButtonColor: '#8CD4B9',
       });
@@ -267,13 +330,12 @@ export default function CheckinModal() {
       console.error('Error:', error);
       Swal.fire({
         title: 'Error!',
-        text: 'Failed to create Sejour or Payment',
+        text: 'Failed to create Sejour, GuestInfo, or Payment',
         icon: 'error',
         confirmButtonColor: '#F8B1A5',
       });
     }
-  };
-
+  }; 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-visible">
@@ -350,7 +412,7 @@ export default function CheckinModal() {
                 <div>
                   <p className="text-sm font-medium text-gray-500">Room Type</p>
                   <p className="mt-1 text-lg font-semibold text-gray-900">
-                    {selectedReservation.typeChambre?.nom_Type_Chambre}
+                    {selectedReservation.id_Type_Chambre?.nom_Type_Chambre}
                   </p>
                 </div>
                 <div>
@@ -371,7 +433,7 @@ export default function CheckinModal() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Available Rooms</h3>
                 <select
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  onChange={(e) => setSelectedReservation({ ...selectedReservation, numChambre: e.target.value })}
+                  onChange={(e) => setSelectedRoomNumber(e.target.value)}
                 >
                   <option value="">Select a room</option>
                   {filteredRooms.map((room) => (
@@ -423,7 +485,7 @@ export default function CheckinModal() {
                           onChange={(e) => handleAdditionalGuestChange(index, 'nom', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           required
-                          readOnly={index === 0} // Make the first guest's name read-only
+                          readOnly={index === 0}
                         />
                       </div>
                       <div>
@@ -434,7 +496,7 @@ export default function CheckinModal() {
                           onChange={(e) => handleAdditionalGuestChange(index, 'prenom', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           required
-                          readOnly={index === 0} // Make the first guest's surname read-only
+                          readOnly={index === 0}
                         />
                       </div>
                       <div>
@@ -554,12 +616,18 @@ export default function CheckinModal() {
                   type="datetime-local"
                   min={new Date(selectedReservation.dateCheckIn).toISOString().slice(0, 16)}
                   max={new Date(selectedReservation.dateCheckOut).toISOString().slice(0, 16)}
-                  onChange={(e) => setSelectedDateTime(e.target.value)}
+                  onChange={(e) => {
+                    console.log('Selected Date and Time:', e.target.value); // Debugging
+                    setSelectedDateTime(e.target.value);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
                 <div className="mt-4 flex justify-end space-x-4">
                   <button
-                    onClick={() => setShowServiceModal(false)}
+                    onClick={() => {
+                      console.log('Service Modal Cancelled'); // Debugging
+                      setShowServiceModal(false);
+                    }}
                     className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                   >
                     Cancel
