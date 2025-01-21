@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import {
+  FaCreditCard,
+  FaMoneyBillWave,
+  FaCheck,
+  FaPrint,
+  FaTimes,
+  FaTaxi,
+  FaSpa,
+  FaCoffee,
+  FaUtensils,
+  FaBasketballBall,
+  FaFutbol,
+  FaHotTub,
+  FaFileInvoiceDollar,
+  FaLink,
+} from 'react-icons/fa';
 
 export default function CheckinModal() {
   const [reservations, setReservations] = useState([]);
@@ -10,16 +26,21 @@ export default function CheckinModal() {
   const [availableRooms, setAvailableRooms] = useState([]);
   const [cautionValue, setCautionValue] = useState(0);
   const [cautionStatus, setCautionStatus] = useState('Active');
-  const [services, setServices] = useState([
-    { id_Service: 1, nom_Service: 'Taxi' },
-    { id_Service: 2, nom_Service: 'Spa' },
-    { id_Service: 3, nom_Service: 'Petit-Dejeuner' },
-    { id_Service: 4, nom_Service: 'Dejeuner' },
-    { id_Service: 5, nom_Service: 'Dinner' },
-    { id_Service: 6, nom_Service: 'Terrain de Basket' },
-    { id_Service: 7, nom_Service: 'Terrain de FootBall' },
-    { id_Service: 8, nom_Service: 'Hamam' },
-  ]);
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // Default payment method
+  const [selectedServices, setSelectedServices] = useState([]); // Track selected services
+  const [totalAmount, setTotalAmount] = useState(0); // Total amount based on services
+  const [selectedDateTime, setSelectedDateTime] = useState(''); // Track selected date and time
+
+  const services = [
+    { id_Service: 1, nom_Service: 'Taxi', icon: <FaTaxi />, tarif: 50 },
+    { id_Service: 2, nom_Service: 'Spa', icon: <FaSpa />, tarif: 100 },
+    { id_Service: 3, nom_Service: 'Petit-Dejeuner', icon: <FaCoffee />, tarif: 20 },
+    { id_Service: 4, nom_Service: 'Dejeuner', icon: <FaUtensils />, tarif: 30 },
+    { id_Service: 5, nom_Service: 'Dinner', icon: <FaUtensils />, tarif: 40 },
+    { id_Service: 6, nom_Service: 'Terrain de Basket', icon: <FaBasketballBall />, tarif: 15 },
+    { id_Service: 7, nom_Service: 'Terrain de FootBall', icon: <FaFutbol />, tarif: 20 },
+    { id_Service: 8, nom_Service: 'Hamam', icon: <FaHotTub />, tarif: 60 },
+  ];
 
   // Fetch today's check-ins
   useEffect(() => {
@@ -77,12 +98,14 @@ export default function CheckinModal() {
   // Handle reservation selection
   const handleReservationSelect = (reservation) => {
     setSelectedReservation(reservation);
+
     // Initialize additional guests based on the number of adults in the reservation
-    const newAdditionalGuests = Array(reservation.nombreAdults - 1).fill().map(() => ({
-      nom: '',
-      prenom: '',
-      cin: '',
+    const newAdditionalGuests = Array(reservation.nombreAdults).fill().map((_, index) => ({
+      nom: index === 0 ? reservation.nom : '', // Pre-fill the first guest's name
+      prenom: index === 0 ? reservation.prenom : '', // Pre-fill the first guest's surname
+      cin: '', // CIN field is empty initially
     }));
+
     setAdditionalGuests(newAdditionalGuests);
   };
 
@@ -100,11 +123,11 @@ export default function CheckinModal() {
   };
 
   // Handle service date and time selection
-  const handleServiceDateTimeSelect = async (dateTime) => {
-    if (!selectedReservation || !selectedService) return;
+  const handleServiceDateTimeSelect = async () => {
+    if (!selectedReservation || !selectedService || !selectedDateTime) return;
 
     // Validate that the selected date and time are within the reservation's check-in and check-out dates
-    const selectedDate = new Date(dateTime);
+    const selectedDate = new Date(selectedDateTime);
     const checkInDate = new Date(selectedReservation.dateCheckIn);
     const checkOutDate = new Date(selectedReservation.dateCheckOut);
 
@@ -118,54 +141,36 @@ export default function CheckinModal() {
       return;
     }
 
-    // Create a new ConsommationService
-    const newConsommationService = {
-      id_Service: selectedService.id_Service, // Assuming selectedService has an Id_Service
-      id_sejour: selectedReservation.id, // Use the ID of the selected reservation
+    // Add the selected service to the list
+    const newService = {
+      ...selectedService,
       date: selectedDate.toISOString().split('T')[0], // Extract date part
       heure: selectedDate.toTimeString().split(' ')[0], // Extract time part
-      quantite_Service: 1, // Default quantity (can be modified)
+      quantite_Service: 1, // Default quantity
     };
 
-    // Send the new ConsommationService to the API
-    try {
-      const consommationResponse = await fetch('https://localhost:7141/api/ConsommationService', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newConsommationService),
-      });
-
-      if (!consommationResponse.ok) {
-        throw new Error('Failed to create ConsommationService');
-      }
-
-      Swal.fire({
-        title: 'Success!',
-        text: 'Service added successfully.',
-        icon: 'success',
-        confirmButtonColor: '#8CD4B9',
-      });
-    } catch (error) {
-      console.error('Error:', error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Failed to add service',
-        icon: 'error',
-        confirmButtonColor: '#F8B1A5',
-      });
-    }
-
+    setSelectedServices([...selectedServices, newService]);
     setShowServiceModal(false);
+    setSelectedDateTime(''); // Reset selected date and time
   };
 
-  // Handle form submission to create Sejour
+  // Calculate total amount based on selected services and caution
+  useEffect(() => {
+    const servicesTotal = selectedServices.reduce((sum, service) => sum + service.tarif * service.quantite_Service, 0);
+    const total = servicesTotal + parseFloat(cautionValue || 0); // Add caution value to the total
+    setTotalAmount(total);
+  }, [selectedServices, cautionValue]);
+
+  // Handle form submission to create Sejour and Payment
   const handleSubmit = async () => {
     if (!selectedReservation) return;
-
+  
     // Validate that all required fields are filled
-    if (additionalGuests.some((guest) => !guest.nom || !guest.prenom || !guest.cin)) {
+    if (
+      additionalGuests.some(
+        (guest) => !guest.nom || !guest.prenom || !guest.cin
+      )
+    ) {
       Swal.fire({
         title: 'Error!',
         text: 'Please fill in all guest information.',
@@ -174,7 +179,7 @@ export default function CheckinModal() {
       });
       return;
     }
-
+  
     // Create a new Sejour
     const newSejour = {
       id_sejour: selectedReservation.id, // Use ReservationId as Id_sejour
@@ -183,11 +188,11 @@ export default function CheckinModal() {
       date_Checkout: selectedReservation.dateCheckOut,
       numChambre: selectedReservation.id_Type_Chambre, // Example: Use room type ID as room number
       statut_Caution: cautionStatus, // Use selected caution status
-      montant_Total_Sejour: 0, // Calculate total later
+      montant_Total_Sejour: totalAmount, // Use calculated total amount
       additionalGuests: additionalGuests, // Include additional guests
       caution: cautionValue, // Include caution value
     };
-
+  
     // Send the new Sejour to the API
     try {
       const sejourResponse = await fetch('https://localhost:7141/api/Sejour', {
@@ -197,14 +202,64 @@ export default function CheckinModal() {
         },
         body: JSON.stringify(newSejour),
       });
-
+  
       if (!sejourResponse.ok) {
         throw new Error('Failed to create Sejour');
       }
-
+  
+      // Fetch the existing payment for the reservation
+      const paiementsResponse = await fetch(`https://localhost:7141/api/paiements/reservation/${selectedReservation.id}`);
+      if (!paiementsResponse.ok) {
+        throw new Error('Failed to fetch paiements');
+      }
+  
+      const paiements = await paiementsResponse.json();
+      let paiement;
+  
+      if (paiements.length > 0) {
+        // Update the existing payment
+        paiement = paiements[0];
+        paiement.Montant += parseFloat(totalAmount);
+        paiement.SejourId = selectedReservation.id;
+  
+        const updateResponse = await fetch(`https://localhost:7141/api/paiements/${paiement.IdPaiement}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(paiement),
+        });
+  
+        if (!updateResponse.ok) {
+          throw new Error('Failed to update Paiement');
+        }
+      } else {
+        // Create a new payment if it doesn't exist
+        const newPayment = {
+          ReservationId: parseInt(selectedReservation.id),
+          Montant: parseFloat(totalAmount),
+          MethodPaiement: paymentMethod, // Use selected payment method
+          DatePaiement: new Date().toISOString(),
+          StatutPaiement: 1, // Assuming 1 means 'Paid'
+          SejourId: selectedReservation.id, // Link to the Sejour
+        };
+  
+        const createResponse = await fetch('https://localhost:7141/api/paiements', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newPayment),
+        });
+  
+        if (!createResponse.ok) {
+          throw new Error('Failed to create Paiement');
+        }
+      }
+  
       Swal.fire({
         title: 'Success!',
-        text: 'Sejour created successfully.',
+        text: 'Sejour and Payment updated successfully.',
         icon: 'success',
         confirmButtonColor: '#8CD4B9',
       });
@@ -212,7 +267,7 @@ export default function CheckinModal() {
       console.error('Error:', error);
       Swal.fire({
         title: 'Error!',
-        text: 'Failed to create Sejour',
+        text: 'Failed to create Sejour or Payment',
         icon: 'error',
         confirmButtonColor: '#F8B1A5',
       });
@@ -368,6 +423,7 @@ export default function CheckinModal() {
                           onChange={(e) => handleAdditionalGuestChange(index, 'nom', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           required
+                          readOnly={index === 0} // Make the first guest's name read-only
                         />
                       </div>
                       <div>
@@ -378,6 +434,7 @@ export default function CheckinModal() {
                           onChange={(e) => handleAdditionalGuestChange(index, 'prenom', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           required
+                          readOnly={index === 0} // Make the first guest's surname read-only
                         />
                       </div>
                       <div>
@@ -397,16 +454,83 @@ export default function CheckinModal() {
 
               <div className="mt-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Select Services</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {services.map((service) => (
                     <button
                       key={service.id_Service}
                       onClick={() => handleServiceSelect(service)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center justify-center"
                     >
-                      {service.nom_Service}
+                      {service.icon}
+                      <span className="ml-2">{service.nom_Service}</span>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Selected Services</h3>
+                <div className="space-y-4">
+                  {selectedServices.map((service, index) => (
+                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-lg font-semibold">{service.nom_Service}</p>
+                          <p className="text-sm text-gray-500">Date: {service.date}, Time: {service.heure}</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold">${service.tarif * service.quantite_Service}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Total Amount</h3>
+                <p className="text-2xl font-bold text-blue-600">${totalAmount.toFixed(2)}</p>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Payment Method</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <button
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`px-4 py-2 rounded-md flex items-center justify-center ${
+                      paymentMethod === 'cash' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    <FaMoneyBillWave className="mr-2" />
+                    Cash
+                  </button>
+                  <button
+                    onClick={() => setPaymentMethod('card')}
+                    className={`px-4 py-2 rounded-md flex items-center justify-center ${
+                      paymentMethod === 'card' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    <FaCreditCard className="mr-2" />
+                    Card
+                  </button>
+                  <button
+                    onClick={() => setPaymentMethod('cheque')}
+                    className={`px-4 py-2 rounded-md flex items-center justify-center ${
+                      paymentMethod === 'cheque' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    <FaFileInvoiceDollar className="mr-2" />
+                    Cheque
+                  </button>
+                  <button
+                    onClick={() => setPaymentMethod('lien_paiement')}
+                    className={`px-4 py-2 rounded-md flex items-center justify-center ${
+                      paymentMethod === 'lien_paiement' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    <FaLink className="mr-2" />
+                    Lien de Paiement
+                  </button>
                 </div>
               </div>
 
@@ -415,6 +539,7 @@ export default function CheckinModal() {
                   onClick={handleSubmit}
                   className="px-8 py-4 bg-blue-600 text-white text-lg font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
+                  <FaCheck className="mr-2" />
                   Submit
                 </button>
               </div>
@@ -429,15 +554,23 @@ export default function CheckinModal() {
                   type="datetime-local"
                   min={new Date(selectedReservation.dateCheckIn).toISOString().slice(0, 16)}
                   max={new Date(selectedReservation.dateCheckOut).toISOString().slice(0, 16)}
-                  onChange={(e) => handleServiceDateTimeSelect(e.target.value)}
+                  onChange={(e) => setSelectedDateTime(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
-                <button
-                  onClick={() => setShowServiceModal(false)}
-                  className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                >
-                  Cancel
-                </button>
+                <div className="mt-4 flex justify-end space-x-4">
+                  <button
+                    onClick={() => setShowServiceModal(false)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleServiceDateTimeSelect}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    OK
+                  </button>
+                </div>
               </div>
             </div>
           )}
