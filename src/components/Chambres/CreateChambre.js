@@ -4,7 +4,7 @@ import { MdBed, MdDescription, MdBuild, MdCheckCircle } from 'react-icons/md';
 
 export default function CreateChambre() {
   const [formData, setFormData] = useState({
-    Id_Type_Chambre: '', // ID du type de chambre (avec underscore)
+    id_Type_Chambre: '', // ID du type de chambre (avec underscore)
     description: '', // Description de la chambre
     etatChambre: '', // État de la chambre (par défaut : chaîne vide)
   });
@@ -27,7 +27,7 @@ export default function CreateChambre() {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: name === 'etatChambre' || name === 'Id_Type_Chambre' ? parseInt(value, 10) : value,
+      [name]: name === 'etatChambre' || name === 'id_Type_Chambre' ? parseInt(value, 10) : value,
     });
   };
 
@@ -79,14 +79,14 @@ export default function CreateChambre() {
         <div className="space-y-6">
           {/* Type de chambre */}
           <div>
-            <label htmlFor="Id_Type_Chambre" className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+            <label htmlFor="id_Type_Chambre" className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <MdBed className="mr-2 text-xl text-blue-500" />
               Type de chambre
             </label>
             <select
-              id="Id_Type_Chambre"
-              name="Id_Type_Chambre"
-              value={formData.Id_Type_Chambre}
+              id="id_Type_Chambre"
+              name="id_Type_Chambre"
+              value={formData.id_Type_Chambre}
               onChange={handleChange}
               className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
               required
