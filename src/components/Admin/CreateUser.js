@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Swal from 'sweetalert2';
 
 const CreateUser  = () => {
   const [formData, setFormData] = useState({
@@ -49,12 +50,23 @@ const CreateUser  = () => {
 
   const validateForm = () => {
     const newErrors = {};
+    
+    // Validation du nom et prénom
     if (!formData.nom) newErrors.nom = "Le nom est obligatoire.";
     if (!formData.prenom) newErrors.prenom = "Le prénom est obligatoire.";
-    if (!formData.email) newErrors.email = "L'adresse email est obligatoire.";
+    
+    // Validation de l'email avec regex
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    if (!formData.email) {
+      newErrors.email = "L'adresse email est obligatoire.";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "L'adresse email n'est pas valide.";
+    }
+    
+    // Validation du numéro de téléphone
     if (!formData.phoneNumber) newErrors.phoneNumber = "Le numéro de téléphone est obligatoire.";
-    if (!formData.password) newErrors.password = "Le mot de passe est obligatoire.";
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Les mots de passe ne correspondent pas.";
+    
+    // Validation du rôle et genre
     if (!formData.role) newErrors.role = "Le rôle est obligatoire.";
     if (!formData.genre) newErrors.genre = "Le genre est obligatoire.";
     
@@ -79,9 +91,45 @@ const CreateUser  = () => {
     setApiError('');
     setSuccess('');
 
+    // Confirmation avec saisie du mot de passe
+    const confirmResult = await Swal.fire({
+      title: 'Confirmation',
+      html: `
+        <p>Pour confirmer la création, veuillez saisir le mot de passe par défaut</p>
+        <input 
+          type="password" 
+          id="password" 
+          class="swal2-input" 
+          placeholder="Mot de passe"
+        >
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Créer',
+      cancelButtonText: 'Annuler',
+      preConfirm: () => {
+        const password = Swal.getPopup().querySelector('#password').value;
+        if (password !== '123Abc') {
+          Swal.showValidationMessage('Mot de passe incorrect');
+          return false;
+        }
+        return true;
+      }
+    });
+
+    if (!confirmResult.isConfirmed) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
+
+    // Définition du mot de passe par défaut après confirmation
+    formData.password = "123Abc";
+    formData.confirmPassword = "123Abc";
 
     try {
       // Première requête pour créer l'utilisateur
