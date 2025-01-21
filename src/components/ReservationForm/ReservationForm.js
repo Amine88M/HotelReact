@@ -23,7 +23,7 @@ function ReservationForm() {
     PrixTotal: 0,
     Statut: 'reserved',
     ModePaiement: '',
-    email: '',
+    Email: '',
   });
 
   // Récupérer les types de chambre depuis l'API
@@ -74,8 +74,7 @@ function ReservationForm() {
   }, [formData.id_Type_Chambre, formData.DateCheckIn, formData.DateCheckOut, typeChambres]);
 
   // Gérer la soumission du formulaire
-  const handleSubmit = async (e) => 
-  {
+  const handleSubmit = async (e) => {
     e.preventDefault();
   
     // Vérifier que le mode de paiement est sélectionné
@@ -155,40 +154,50 @@ function ReservationForm() {
     }
   
     try {
-      // Préparer les données à envoyer à l'API
       const dataToSend = {
         ...formData,
-        Nom: formData.Nom,
-        DateCheckIn: `${formData.DateCheckIn}T00:00:00`,
-        DateCheckOut: `${formData.DateCheckOut}T00:00:00`,
-        NombreAdults: Number(formData.NombreAdults),
-        NombreEnfants: Number(formData.NombreEnfants),
-        id_Type_Chambre: Number(formData.id_Type_Chambre),
-        PrixTotal: calculerPrixTotal(),
+        Nom: formData.Nom.trim(),
+        Prenom: formData.Prenom.trim(),
+        DateCheckIn: new Date(formData.DateCheckIn).toISOString(),
+        DateCheckOut: new Date(formData.DateCheckOut).toISOString(),
+        NombreAdults: parseInt(formData.NombreAdults),
+        NombreEnfants: parseInt(formData.NombreEnfants),
+        id_Type_Chambre: parseInt(formData.id_Type_Chambre),
+        PrixTotal: parseFloat(calculerPrixTotal()),
+        Telephone: formData.Telephone.trim(),
+        Statut: 'reserved',
+        ModePaiement: formData.ModePaiement,
+        Email: formData.Email.trim() || null
       };
 
-      // Log des données avant envoi
-      console.log('Données à envoyer à l\'API de réservation:', dataToSend);
+      console.log('Données envoyées à l\'API:', dataToSend);
 
-      // Première étape : créer la réservation
       const reservationResponse = await fetch('https://localhost:7141/api/reservations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(dataToSend)
       });
 
+      // Lire la réponse une seule fois
+      const responseData = await reservationResponse.json();
+      
       if (!reservationResponse.ok) {
+        if (responseData.errors) {
+          const errorMessages = Object.values(responseData.errors)
+            .flat()
+            .join('\n');
+          throw new Error(errorMessages);
+        }
         throw new Error('Erreur lors de la création de la réservation');
       }
 
-      const result = await reservationResponse.json();
-      console.log('Réponse complète:', result);
+      console.log('Réponse complète:', responseData);
 
       // Extraire l'ID de la réservation de la réponse
-      const reservationId = result.reservation.id;
+      const reservationId = responseData.reservation.id;
       console.log('ID de la réservation:', reservationId);
 
       if (!reservationId) {
@@ -234,8 +243,7 @@ function ReservationForm() {
       });
 
     } catch (error) {
-      console.error('Erreur complète:', error);
-      
+      console.error('Erreur détaillée:', error);
       Swal.fire({
         title: 'Erreur!',
         text: error.message || 'Une erreur est survenue lors de la création de la réservation.',
@@ -406,7 +414,7 @@ function ReservationForm() {
 
   // Modifier la fonction handleSendPaymentLink
   const handleSendPaymentLink = async () => {
-    if (!formData.email) {
+    if (!formData.Email) {
       Swal.fire({
         title: 'Erreur!',
         text: 'Veuillez saisir une adresse email valide',
@@ -426,7 +434,7 @@ function ReservationForm() {
       });
 
       const templateParams = {
-        to_email: formData.email,
+        to_email: formData.Email,
         to_name: `${formData.Prenom} ${formData.Nom}`,
         from_name: "Hôtel Réservation",
         subject: "Confirmation de réservation et lien de paiement - Hôtel",
@@ -453,7 +461,7 @@ function ReservationForm() {
         payment_link: "http:/khelesseni/paiement"
       };
 
-      console.log('Email destiné à:', formData.email);
+      console.log('Email destiné à:', formData.Email);
       console.log('Template utilisé:', EMAILJS_TEMPLATE_ID);
       console.log('Service utilisé:', EMAILJS_SERVICE_ID);
 
@@ -464,12 +472,12 @@ function ReservationForm() {
       );
 
       if (response.status === 200) {
-        console.log('Email envoyé avec succès à:', formData.email);
+        console.log('Email envoyé avec succès à:', formData.Email);
       }
 
       Swal.fire({
         title: 'Succès!',
-        text: `Le lien de paiement a été envoyé à ${formData.email}`,
+        text: `Le lien de paiement a été envoyé à ${formData.Email}`,
         icon: 'success',
         confirmButtonColor: '#8CD4B9'
       });
@@ -613,6 +621,23 @@ function ReservationForm() {
                     </div>
                   </div>
 
+                  <div className="form-group">
+                    <label className="form-label">Email (optionnel)</label>
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <i className="fas fa-envelope"></i>
+                      </span>
+                      <input
+                        type="email"
+                        className="form-control"
+                        name="Email"
+                        value={formData.Email}
+                        onChange={handleChange}
+                        placeholder="exemple@email.com"
+                      />
+                    </div>
+                  </div>
+
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label">Adultes</label>
@@ -735,8 +760,8 @@ function ReservationForm() {
                         type="email"
                         className="form-control"
                         placeholder="Email du client"
-                        value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        value={formData.Email}
+                        onChange={(e) => setFormData({...formData, Email: e.target.value})}
                         required
                       />
                       <button
