@@ -78,6 +78,14 @@ function LayoutAdmin() {
                 
 
                 
+                <Link
+  to="/admin/create-service"
+  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
+>
+  <FaCogs className="mr-3 text-2xl text-green-400 group-hover:text-white" />
+  <span className="group-hover:text-white">Service</span>
+</Link>
+            
 
                 {/* <Link 
                   to="/admin/roles" 

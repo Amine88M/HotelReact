@@ -25,6 +25,7 @@ import ReserverServices from './components/InterfaceService/ReserverServices';
 
 import CreateService from './components/InterfaceService/CreateService';
 import ReservationPage from './components/InterfaceService/ReservationPage';
+import ConsulterService from './components/InterfaceService/ConsulterService';
 import './App.css';
 
 function App() {
@@ -38,8 +39,9 @@ function App() {
           <Route path="users" element={<AdminDashboard />} />
           <Route path="users/edit/:id" element={<EditUser />} />
           <Route path="create-user" element={<CreateUserPage />} />
+          <Route path="consulter-services" element={<ConsulterService />} />
           <Route path="create-chambre" element={<CreateChambre />} />
-          <Route path="create-service" element={<CreateService />} />
+          <Route path="consulter-service" element={<ConsulterService />} />
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         </Route>
