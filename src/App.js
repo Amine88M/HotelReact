@@ -24,7 +24,7 @@ import CheckOutModal from './components/Receptionist/CheckOutModal';
 import ReserverServices from './components/InterfaceService/ReserverServices';
 
 import CreateService from './components/InterfaceService/CreateService';
-
+import ReservationPage from './components/InterfaceService/ReservationPage';
 import './App.css';
 
 function App() {
@@ -43,7 +43,7 @@ function App() {
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         </Route>
-        <Route path="create-service" element={<CreateService />} />
+       
         <Route path="/PersonnelDeMenage" element={<PersonnelDeMenageUI />} />
         
         {/* Protected Receptionist Routes */}
@@ -69,6 +69,7 @@ function App() {
           <Route path="checkOutModal" element={<CheckOutModal />} />
           <Route path="details/:id" element={<Details />} />
           <Route path="reserver-services" element={<ReserverServices />} />
+          <Route path="reserver-services/reservation" element={<ReservationPage />} />
           <Route path="chambres-disponibles" element={<ChambreList />} />
           
    

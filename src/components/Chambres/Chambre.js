@@ -28,6 +28,8 @@ export default function Chambre() {
     1: 'Occupée',
     2: 'En maintenance',
     3: 'Réservée',
+    4: 'Sale',
+    5: 'Propre'
   };
 
   // Récupérer les chambres depuis l'API
