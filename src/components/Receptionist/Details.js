@@ -17,23 +17,8 @@ import {
   Coffee,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import AWS from 'aws-sdk';
 import emailjs from '@emailjs/browser';
 
-// Remplacer les constantes Twilio par les credentials AWS
-const AWS_ACCESS_KEY = 'VOTRE_ACCESS_KEY';
-const AWS_SECRET_KEY = 'VOTRE_SECRET_KEY';
-const AWS_REGION = 'eu-west-1'; // Choisissez votre région
-
-// Configurer AWS
-AWS.config.update({
-  accessKeyId: AWS_ACCESS_KEY,
-  secretAccessKey: AWS_SECRET_KEY,
-  region: AWS_REGION
-});
-
-// Créer une instance SNS
-const sns = new AWS.SNS();
 
 // Remplacer les constantes AWS par EmailJS
 const EMAILJS_SERVICE_ID = 'service_6p4yzr8';
