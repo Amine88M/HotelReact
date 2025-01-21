@@ -16,6 +16,9 @@ import CheckOut from './components/Receptionist/CheckOut';
 import ProtectedRoute from './components/ProtectedRoute';
 import Details from './components/Receptionist/Details';
 import ChambreList from "./ChambreListe";
+import SejourList from "./components/Receptionist/SejourList";
+import SejourDisplay from "./components/Receptionist/SejourDisplay";
+import Sejour from "./components/Receptionist/Sejour";
 
 import CreateChambre from './components/Chambres/CreateChambre';
 
@@ -70,6 +73,10 @@ function App() {
           <Route path="details/:id" element={<Details />} />
           <Route path="reserver-services" element={<ReserverServices />} />
           <Route path="chambres-disponibles" element={<ChambreList />} />
+          <Route path="SejourList" element={<SejourList />} />
+          <Route path="sejour" element={<Sejour />} />
+          <Route path="sejourDisplay" element={<SejourDisplay />} />
+
           
    
 
