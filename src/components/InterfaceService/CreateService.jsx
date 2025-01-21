@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
-import { FaCar, FaSpa, FaUtensils, FaParking, FaQuestionCircle,FaDumbbell, FaTag, FaAlignLeft, FaMoneyBill, FaCheckCircle } from 'react-icons/fa';
+import { FaCar, FaSpa, FaUtensils, FaParking, FaQuestionCircle, FaDumbbell, FaTag, FaAlignLeft, FaMoneyBill, FaCheckCircle } from 'react-icons/fa';
 
 export default function CreateService() {
   const [nomService, setNomService] = useState('');
   const [description, setDescription] = useState('');
   const [tarif, setTarif] = useState('');
-  const [disponibilite, setDisponibilite] = useState('Disponible');
+  const [disponibilite, setDisponibilite] = useState(true); // true = Disponible, false = Indisponible
   const [selectedIcon, setSelectedIcon] = useState('DEFAULT');
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +17,6 @@ export default function CreateService() {
     PARKING: <FaParking className="text-purple-600" />,
     GYM: <FaDumbbell className="text-red-600" />,
     DEFAULT: <FaQuestionCircle className="text-gray-600" />,
-    
   };
 
   const handleSubmit = async (e) => {
@@ -32,7 +31,7 @@ export default function CreateService() {
       Nom_Service: nomService,
       Description: description,
       Tarif: parseFloat(tarif),
-      Disponibilité: disponibilite,
+      Disponibilité: disponibilite, // Booléen (true ou false)
       Icon: selectedIcon,
     };
 
@@ -58,7 +57,7 @@ export default function CreateService() {
           setNomService('');
           setDescription('');
           setTarif('');
-          setDisponibilite('Disponible');
+          setDisponibilite(true); // Réinitialiser à "Disponible"
           setSelectedIcon('DEFAULT');
         });
       } else {
@@ -124,18 +123,8 @@ export default function CreateService() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-            <FaCheckCircle className="text-blue-600" />
-            Disponibilité
-          </label>
-          <select
-            value={disponibilite}
-            onChange={(e) => setDisponibilite(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="Disponible">Disponible</option>
-            <option value="Indisponible">Indisponible</option>
-          </select>
+          
+         
         </div>
 
         <div>

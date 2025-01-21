@@ -213,7 +213,7 @@ export default function Layout({ children }) {
         <Outlet />
       </div>
   
-
+     
       
       <Profile 
         isOpen={isProfileModalOpen} 
