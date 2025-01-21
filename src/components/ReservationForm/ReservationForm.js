@@ -176,28 +176,29 @@ function ReservationForm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          Accept: 'application/json',
         },
-        body: JSON.stringify(dataToSend)
+        body: JSON.stringify(dataToSend),
       });
 
-      // Lire la réponse une seule fois
-      const responseData = await reservationResponse.json();
-      
       if (!reservationResponse.ok) {
-        if (responseData.errors) {
-          const errorMessages = Object.values(responseData.errors)
-            .flat()
-            .join('\n');
-          throw new Error(errorMessages);
+        const errorData = await reservationResponse.json();
+        
+        // Vérifier si c'est une erreur de disponibilité
+        if (errorData.message && errorData.message.includes("disponible")) {
+          throw new Error("Aucune chambre de ce type n'est disponible pour les dates sélectionnées.");
         }
-        throw new Error('Erreur lors de la création de la réservation');
+        
+        // Pour les autres types d'erreurs
+        throw new Error(errorData.message || 'Erreur lors de la création de la réservation');
       }
 
-      console.log('Réponse complète:', responseData);
+      const result = await reservationResponse.json();
+      
+      console.log('Réponse complète:', result);
 
       // Extraire l'ID de la réservation de la réponse
-      const reservationId = responseData.reservation.id;
+      const reservationId = result.reservation.id;
       console.log('ID de la réservation:', reservationId);
 
       if (!reservationId) {
@@ -243,10 +244,11 @@ function ReservationForm() {
       });
 
     } catch (error) {
-      console.error('Erreur détaillée:', error);
+      console.error('Erreur complète:', error);
+      
       Swal.fire({
         title: 'Erreur!',
-        text: error.message || 'Une erreur est survenue lors de la création de la réservation.',
+        text: error.message,
         icon: 'error',
         confirmButtonColor: '#F8B1A5',
       });
@@ -256,13 +258,48 @@ function ReservationForm() {
   // Gérer les changements dans les champs du formulaire
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Validation spéciale pour le numéro de téléphone
+    if (name === 'Telephone') {
+      // Ne permet que les chiffres
+      const numbersOnly = value.replace(/[^0-9]/g, '');
+      setFormData(prev => ({
+        ...prev,
+        [name]: numbersOnly
+      }));
+      return;
+    }
+
     setFormData(prev => {
       const newData = {
         ...prev,
         [name]: value
       };
       
-      // Vérification en temps réel pour le nombre de personnes
+      // Vérification de la durée minimale pour les dates
+      if (['DateCheckIn', 'DateCheckOut'].includes(name)) {
+        const checkIn = name === 'DateCheckIn' ? value : newData.DateCheckIn;
+        const checkOut = name === 'DateCheckOut' ? value : newData.DateCheckOut;
+        
+        if (checkIn && checkOut) {
+          const duree = calculerDuree(checkIn, checkOut);
+          if (duree <= 0) {
+            Swal.fire({
+              title: 'Attention!',
+              text: 'La durée minimale de réservation est d\'une nuit.',
+              icon: 'warning',
+              confirmButtonColor: '#F8B1A5',
+            });
+            // Réinitialiser la date de checkout
+            return {
+              ...newData,
+              DateCheckOut: ''
+            };
+          }
+        }
+      }
+
+      // Reste de votre logique handleChange existante
       if (['NombreAdults', 'NombreEnfants', 'id_Type_Chambre'].includes(name)) {
         const typeChambreSelectionne = typeChambres.find(tc => tc.id_Type_Chambre === parseInt(newData.id_Type_Chambre));
         
