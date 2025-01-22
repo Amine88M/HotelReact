@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, LogIn, LogOut, Menu, BedDouble, UserCircle, X, Camera, Key, CalendarCheck ,Settings} from 'lucide-react';
+import { LayoutDashboard, LogIn, LogOut, Menu, BedDouble, UserCircle, X, Camera, MapPin, CalendarCheck ,Settings} from 'lucide-react';
 import { Link,Outlet} from 'react-router-dom';
 import Profile from '../Profile/Profile';
 import { FaBed } from "react-icons/fa";
@@ -182,7 +182,7 @@ export default function Layout({ children }) {
             </li>
             <li>
               <Link to="/Receptionist/SejourList" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
-                <Settings className="w-5 h-5 text-gray-500" /> 
+                <MapPin className="w-5 h-5 text-gray-500" /> 
                 {/* Icône pour "Services" */}
                 <span className="ml-3">Sejours</span>
               </Link>

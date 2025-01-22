@@ -32,7 +32,7 @@ export default function CheckinModal() {
   const [totalAmount, setTotalAmount] = useState(0); // Total amount based on services
   const [selectedDateTime, setSelectedDateTime] = useState(''); // Track selected date and time
   const [selectedRoomNumber, setSelectedRoomNumber] = useState(null);
-  const [roomTypes, setRoomTypes] = useState([]); // State to store room types
+  const [roomTypes, setRoomTypes] = useState({}); // State to store room types by ID
 
   const services = [
     { id_Service: 1, nom_Service: 'Taxi', icon: <FaTaxi />, tarif: 50 },
@@ -93,29 +93,42 @@ export default function CheckinModal() {
     fetchSejours();
   }, []);
 
-  // Fetch room types
-  useEffect(() => {
-    const fetchRoomTypes = async () => {
-      try {
-        const response = await fetch('https://localhost:7141/api/reservations/room-types');
-        if (!response.ok) {
-          throw new Error('Failed to fetch room types');
-        }
-        const data = await response.json();
-        setRoomTypes(data);
-      } catch (error) {
-        console.error('Error:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Failed to fetch room types',
-          icon: 'error',
-          confirmButtonColor: '#F8B1A5',
-        });
+  // Fetch room type by ID
+  const fetchRoomTypeById = async (id) => {
+    try {
+      const response = await fetch(`https://localhost:7141/api/Reservations/room-type/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch room type');
       }
+      const data = await response.json();
+      return data.text; // Return the room type name
+    } catch (error) {
+      console.error('Error:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Failed to fetch room type',
+        icon: 'error',
+        confirmButtonColor: '#F8B1A5',
+      });
+      return 'N/A'; // Return 'N/A' if the room type is not found
+    }
+  };
+
+  // Fetch room types for all reservations
+  useEffect(() => {
+    const fetchRoomTypesForReservations = async () => {
+      const roomTypesMap = {};
+      for (const reservation of reservations) {
+        if (reservation.id_Type_Chambre) {
+          const roomTypeName = await fetchRoomTypeById(reservation.id_Type_Chambre);
+          roomTypesMap[reservation.id_Type_Chambre] = roomTypeName;
+        }
+      }
+      setRoomTypes(roomTypesMap);
     };
 
-    fetchRoomTypes();
-  }, []);
+    fetchRoomTypesForReservations();
+  }, [reservations]);
 
   // Filter reservations that are not in Sejour table
   const filteredReservations = reservations.filter(
@@ -153,8 +166,7 @@ export default function CheckinModal() {
 
   // Get room type name by id
   const getRoomTypeName = (id) => {
-    const roomType = roomTypes.find((type) => type.id_Type_Chambre === id);
-    return roomType ? roomType.nom_Type_Chambre : 'N/A';
+    return roomTypes[id] || 'N/A';
   };
 
   // Handle reservation selection
@@ -180,7 +192,7 @@ export default function CheckinModal() {
 
   // Handle service selection
   const handleServiceSelect = (service) => {
-    setSelectedService(service);
+    setSelectedService({ ...service, quantite_Service: 1 }); // Initialize quantity to 1
     setShowServiceModal(true);
   };
 
@@ -202,14 +214,18 @@ export default function CheckinModal() {
       return;
     }
 
+    // Create a new service object with the selected date, time, and quantity
     const newService = {
       ...selectedService,
-      date: selectedDate.toISOString().split('T')[0],
-      heure: selectedDate.toTimeString().split(' ')[0],
-      quantite_Service: 1,
+      date: selectedDate.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+      heure: selectedDate.toTimeString().split(' ')[0], // Format time as HH:MM:SS
+      quantite_Service: selectedService.quantite_Service || 1, // Use the selected quantity
     };
 
+    // Add the new service to the selectedServices array
     setSelectedServices([...selectedServices, newService]);
+
+    // Close the service modal and reset the selected date/time
     setShowServiceModal(false);
     setSelectedDateTime('');
   };
@@ -249,7 +265,6 @@ export default function CheckinModal() {
       date_Checkin: new Date(selectedReservation.dateCheckIn).toISOString().split('T')[0],
       date_Checkout: new Date(selectedReservation.dateCheckOut).toISOString().split('T')[0],
       numChambre: parseInt(selectedRoomNumber),
-      statut_Caution: cautionStatus,
       montant_Total_Sejour: parseFloat(totalAmount),
       caution: parseFloat(cautionValue),
     };
@@ -272,28 +287,19 @@ export default function CheckinModal() {
       const sejourData = await sejourResponse.json();
       const sejourId = sejourData.id_sejour; // Get the id_sejour from the created Sejour
   
-      // Step 2: Update the room status to "Occupée"
-      const updateRoomStatusResponse = await fetch(
-        `https://localhost:7141/api/chambre/${selectedRoomNumber}/update-status`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(1), // 1 = Occupée
-        }
-      );
-  
-      if (!updateRoomStatusResponse.ok) {
-        throw new Error('Failed to update room status');
+      // Step 2: Fetch the created Sejour by reservation ID using the new endpoint
+      const fetchSejourResponse = await fetch(`https://localhost:7141/api/Sejour/reservation-details/${selectedReservation.id}`);
+      if (!fetchSejourResponse.ok) {
+        throw new Error('Failed to fetch Sejour');
       }
+      const fetchedSejour = await fetchSejourResponse.json();
   
       // Step 3: Create GuestInfo with the Sejour ID
       const guestInfosPayload = additionalGuests.map((guest) => ({
         nom: guest.nom,
         prenom: guest.prenom,
         cin: guest.cin,
-        sejourId: sejourId, // Link to the newly created Sejour
+        id_Sejour: sejourId, // Link to the newly created Sejour
       }));
   
       const guestsResponse = await fetch('https://localhost:7141/api/GuestInfo/Bulk', {
@@ -371,11 +377,11 @@ export default function CheckinModal() {
       // Step 5: Create ConsommationService for each selected service
       for (const service of selectedServices) {
         const consommationServicePayload = {
-          serviceId: service.id_Service,
-          sejourId: sejourId, // Link to the newly created Sejour
+          id_Service: service.id_Service,
+          id_Sejour: sejourId, // Link to the newly created Sejour
           date: service.date,
           heure: service.heure,
-          quantite_Service: service.quantite_Service,
+          quantite_Service: service.quantite_Service, // Include the quantity
         };
   
         const consommationServiceResponse = await fetch(
@@ -633,6 +639,7 @@ export default function CheckinModal() {
                         <div>
                           <p className="text-lg font-semibold">{service.nom_Service}</p>
                           <p className="text-sm text-gray-500">Date: {service.date}, Time: {service.heure}</p>
+                          <p className="text-sm text-gray-500">Quantity: {service.quantite_Service}</p>
                         </div>
                         <div>
                           <p className="text-lg font-semibold">${service.tarif * service.quantite_Service}</p>
@@ -702,7 +709,15 @@ export default function CheckinModal() {
                   min={new Date(selectedReservation.dateCheckIn).toISOString().slice(0, 16)}
                   max={new Date(selectedReservation.dateCheckOut).toISOString().slice(0, 16)}
                   onChange={(e) => setSelectedDateTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
+                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={selectedService.quantite_Service || 1}
+                  onChange={(e) => setSelectedService({ ...selectedService, quantite_Service: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
                 />
                 <div className="mt-4 flex justify-end space-x-4">
                   <button
