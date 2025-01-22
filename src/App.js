@@ -77,7 +77,7 @@ function App() {
           <Route path="create-user" element={<CreateUserPage />} />
           <Route path="consulter-services" element={<ConsulterService />} />
           <Route path="create-chambre" element={<CreateChambre />} />
-          <Route path="consulter-service" element={<ConsulterService />} />
+          <Route path="create-service" element={<CreateService />} />
           <Route path="roles" element={<div>Page des rôles</div>} />
           <Route path="reset-password" element={<div>Page de réinitialisation</div>} />
         </Route>
