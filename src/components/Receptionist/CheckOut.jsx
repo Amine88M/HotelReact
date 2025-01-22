@@ -111,7 +111,6 @@ export default function CheckOut() {
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Num Réservation</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom Client</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Checkout</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut Caution</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant Total</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -123,9 +122,8 @@ export default function CheckOut() {
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{checkOut.reservation_Id}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{checkOut.guestName}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(checkOut.date_Checkout).toLocaleDateString()}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{checkOut.statut_caution}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  ${checkOut.montant_Total_Sejour.toFixed(2)}
+                  {checkOut.montant_Total_Sejour.toFixed(2)} DH
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex gap-2">

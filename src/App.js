@@ -106,9 +106,9 @@ function App() {
           <Route path="reserver-services/reservation" element={<ReservationPage />} />
           <Route path="chambres-disponibles" element={<ChambreList />} />
           <Route path="SejourList" element={<SejourList />} />
-          <Route path="Sejour" element={<Sejour />} />
           <Route path="SejourDisplay" element={<SejourDisplay />} />
           <Route path="checkInModal" element={<CheckInModal />} />
+          <Route path="checkOutModal" element={<CheckOutModal />} />
 
 
         </Route>

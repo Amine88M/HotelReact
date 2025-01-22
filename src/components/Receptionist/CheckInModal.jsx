@@ -608,15 +608,6 @@ export default function CheckinModal() {
                     <FaFileInvoiceDollar className="mr-2" />
                     Cheque
                   </button>
-                  <button
-                    onClick={() => setPaymentMethod('lien_paiement')}
-                    className={`px-4 py-2 rounded-md flex items-center justify-center ${
-                      paymentMethod === 'lien_paiement' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    <FaLink className="mr-2" />
-                    Lien de Paiement
-                  </button>
                 </div>
               </div>
 

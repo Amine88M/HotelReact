@@ -15,27 +15,37 @@ export default function CheckIn({ onNewCheckIn }) {
         // Fetch Sejour data
         const sejourResponse = await fetch('https://localhost:7141/api/Sejour');
         const sejours = await sejourResponse.json();
-
+  
         // Fetch GuestInfo data
         const guestInfoResponse = await fetch('https://localhost:7141/api/GuestInfo');
         const guestInfos = await guestInfoResponse.json();
-
-        // Fetch RoomTypes data
-        const roomTypesResponse = await fetch('https://localhost:7141/api/reservations/RoomTypes');
-        const roomTypesData = await roomTypesResponse.json();
-        setRoomTypes(roomTypesData); // Store room types in state
-
+  
         // Map Sejour data to include guest name, CIN, number of persons, and room type
-        const mappedData = sejours.map(sejour => {
+        const mappedData = await Promise.all(sejours.map(async (sejour) => {
           // Find the primary guest (assuming the first guest is the primary)
           const primaryGuest = guestInfos.find(guest => guest.id_sejour === sejour.id_sejour);
-
-          // Calculate the number of persons (NombreAdults + NombreEnfants)
-          const numberOfPersons = sejour.reservation?.nombreAdults + sejour.reservation?.nombreEnfants || 0;
-
-          // Find the room type for the current Sejour
-          const roomType = roomTypesData.find(type => type.value === sejour.chambre?.id_Type_Chambre)?.text || 'N/A';
-
+  
+          // Fetch the number of persons from the reservation
+          const nombrePersonnesResponse = await fetch(`https://localhost:7141/api/reservations/nombre-personnes/${sejour.reservation_Id}`);
+          const nombrePersonnesData = await nombrePersonnesResponse.json();
+          const numberOfPersons = nombrePersonnesData.nombrePersonnes;
+  
+          // Fetch the reservation details to get the id_Type_Chambre
+          let roomType = 'N/A';
+          const reservationResponse = await fetch(`https://localhost:7141/api/reservations/${sejour.reservation_Id}`);
+          if (reservationResponse.ok) {
+            const reservationData = await reservationResponse.json();
+  
+            // Fetch the room type name using the id_Type_Chambre from the reservation
+            if (reservationData.id_Type_Chambre) {
+              const roomTypeResponse = await fetch(`https://localhost:7141/api/reservations/room-type/${reservationData.id_Type_Chambre}`);
+              if (roomTypeResponse.ok) {
+                const roomTypeData = await roomTypeResponse.json();
+                roomType = roomTypeData.text; // Use the room type name (nom_type_chambre)
+              }
+            }
+          }
+  
           return {
             id: sejour.id_sejour,
             guestName: primaryGuest ? `${primaryGuest.nom} ${primaryGuest.prenom}` : 'N/A',
@@ -43,16 +53,16 @@ export default function CheckIn({ onNewCheckIn }) {
             numberOfPersons,
             checkInDate: new Date(sejour.date_Checkin).toLocaleDateString(),
             roomNumber: sejour.numChambre,
-            roomType, // Use the room type fetched from the API
+            roomType, // Use the room type name fetched from the API
           };
-        });
-
+        }));
+  
         setCheckIns(mappedData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-
+  
     fetchData();
   }, []);
 
