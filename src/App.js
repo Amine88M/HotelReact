@@ -15,9 +15,6 @@ import CheckIn from './components/Receptionist/CheckIn';
 import CheckOut from './components/Receptionist/CheckOut';
 import Details from './components/Receptionist/Details';
 import ChambreList from "./ChambreListe";
-import SejourList from "./components/Receptionist/SejourList";
-import SejourDisplay from "./components/Receptionist/SejourDisplay";
-import Sejour from "./components/Receptionist/Sejour";
 import CreateChambre from './components/Chambres/CreateChambre';
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
@@ -26,7 +23,6 @@ import CreateService from './components/InterfaceService/CreateService';
 import ReservationPage from './components/InterfaceService/ReservationPage';
 import ConsulterService from './components/InterfaceService/ConsulterService';
 import './App.css';
-import AdminDashboardUI from './components/Admin/AdminDashboardUi';
 
 // Composant Unauthorized directement dans App.js
 const Unauthorized = () => {
@@ -76,11 +72,10 @@ function App() {
           }
         >
           <Route index element={<AdminDashboard />} />
-          <Route path="dashboard" element={<AdminDashboardUI />} />
           <Route path="users" element={<AdminDashboard />} />
           <Route path="users/edit/:id" element={<EditUser />} />
           <Route path="create-user" element={<CreateUserPage />} />
-          <Route path="consulter-services" element={<ConsulterService />} />
+          <Route path="consulter-service" element={<ConsulterService />} />
           <Route path="create-chambre" element={<CreateChambre />} />
           <Route path="create-service" element={<CreateService />} />
           <Route path="roles" element={<div>Page des rôles</div>} />
@@ -96,6 +91,7 @@ function App() {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="checkin" element={<CheckIn />} />
           <Route path="checkout" element={<CheckOut />} />
@@ -105,14 +101,15 @@ function App() {
           <Route path="chambres" element={<Chambre />} />
           <Route path="reserver-services" element={<ReserverServices />} />
           <Route path="details/:id" element={<Details />} />
-          <Route path="reserver-services/reservation" element={<ReservationPage />} />
+          <Route
+            path="reserver-services/reservation"
+            element={
+              <ProtectedRoute allowedRoles={['Receptionist']}>
+                <ReservationPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="chambres-disponibles" element={<ChambreList />} />
-          <Route path="SejourList" element={<SejourList />} />
-          <Route path="SejourDisplay" element={<SejourDisplay />} />
-          <Route path="checkInModal" element={<CheckInModal />} />
-          <Route path="checkOutModal" element={<CheckOutModal />} />
-
-
         </Route>
 
         {/* Routes protégées pour le personnel de ménage */}

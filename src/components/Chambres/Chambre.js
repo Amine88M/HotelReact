@@ -16,10 +16,10 @@ export default function Chambre() {
 
   // Mapping pour les types de chambre
   const typesChambres = {
-    5: 'Simple',
-    6: 'Double',
-    8: 'Suite',
-    9: 'Familiale',
+    1: 'Simple',
+    2: 'Double',
+    3: 'Suite',
+    4: 'Familiale',
   };
 
   // Mapping pour les statuts
