@@ -19,6 +19,7 @@ import {
 
 export default function CheckinModal() {
   const [reservations, setReservations] = useState([]);
+  const [sejours, setSejours] = useState([]); // State to store Sejour data
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [additionalGuests, setAdditionalGuests] = useState([]);
   const [showServiceModal, setShowServiceModal] = useState(false);
@@ -48,12 +49,10 @@ export default function CheckinModal() {
     const fetchTodayCheckIns = async () => {
       try {
         const response = await fetch('https://localhost:7141/api/Reservations/today-checkins');
-        console.log('Fetching today\'s check-ins - Response:', response); // Debugging
         if (!response.ok) {
           throw new Error('Failed to fetch today\'s check-ins');
         }
         const data = await response.json();
-        console.log('Fetched today\'s check-ins - Data:', data); // Debugging
         setReservations(data);
       } catch (error) {
         console.error('Error:', error);
@@ -69,17 +68,44 @@ export default function CheckinModal() {
     fetchTodayCheckIns();
   }, []);
 
+  // Fetch Sejour data
+  useEffect(() => {
+    const fetchSejours = async () => {
+      try {
+        const response = await fetch('https://localhost:7141/api/Sejour');
+        if (!response.ok) {
+          throw new Error('Failed to fetch Sejours');
+        }
+        const data = await response.json();
+        setSejours(data);
+      } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Failed to fetch Sejours',
+          icon: 'error',
+          confirmButtonColor: '#F8B1A5',
+        });
+      }
+    };
+
+    fetchSejours();
+  }, []);
+
+  // Filter reservations that are not in Sejour table
+  const filteredReservations = reservations.filter(
+    (reservation) => !sejours.some((sejour) => sejour.reservation_Id === reservation.id)
+  );
+
   // Fetch available rooms
   useEffect(() => {
     const fetchAvailableRooms = async () => {
       try {
         const response = await fetch('https://localhost:7141/api/chambre/disponibles');
-        console.log('Fetching available rooms - Response:', response); // Debugging
         if (!response.ok) {
           throw new Error('Failed to fetch available rooms');
         }
         const data = await response.json();
-        console.log('Fetched available rooms - Data:', data); // Debugging
         setAvailableRooms(data);
       } catch (error) {
         console.error('Error:', error);
@@ -102,7 +128,6 @@ export default function CheckinModal() {
 
   // Handle reservation selection
   const handleReservationSelect = (reservation) => {
-    console.log('Selected Reservation:', reservation); // Debugging
     setSelectedReservation(reservation);
 
     // Initialize additional guests based on the number of adults in the reservation
@@ -112,7 +137,6 @@ export default function CheckinModal() {
       cin: '', // CIN field is empty initially
     }));
 
-    console.log('Initialized Additional Guests:', newAdditionalGuests); // Debugging
     setAdditionalGuests(newAdditionalGuests);
   };
 
@@ -125,7 +149,6 @@ export default function CheckinModal() {
 
   // Handle service selection
   const handleServiceSelect = (service) => {
-    console.log('Selected Service:', service); // Debugging
     setSelectedService(service);
     setShowServiceModal(true);
   };
@@ -138,12 +161,7 @@ export default function CheckinModal() {
     const checkInDate = new Date(selectedReservation.dateCheckIn);
     const checkOutDate = new Date(selectedReservation.dateCheckOut);
 
-    console.log('Selected Date:', selectedDate); // Debugging
-    console.log('Check-In Date:', checkInDate); // Debugging
-    console.log('Check-Out Date:', checkOutDate); // Debugging
-
     if (selectedDate < checkInDate || selectedDate > checkOutDate) {
-      console.log('Selected date is outside the reservation period'); // Debugging
       Swal.fire({
         title: 'Error!',
         text: 'Selected date and time must be between check-in and check-out dates.',
@@ -160,7 +178,6 @@ export default function CheckinModal() {
       quantite_Service: 1,
     };
 
-    console.log('Adding New Service:', newService); // Debugging
     setSelectedServices([...selectedServices, newService]);
     setShowServiceModal(false);
     setSelectedDateTime('');
@@ -170,14 +187,12 @@ export default function CheckinModal() {
   useEffect(() => {
     const servicesTotal = selectedServices.reduce((sum, service) => sum + service.tarif * service.quantite_Service, 0);
     const total = servicesTotal + parseFloat(cautionValue || 0);
-    console.log('Calculated Total Amount:', total); // Debugging
     setTotalAmount(total);
   }, [selectedServices, cautionValue]);
 
   // Handle form submission to create Sejour and Payment
   const handleSubmit = async () => {
     if (!selectedReservation || !selectedRoomNumber) {
-      console.log('No room selected');
       Swal.fire({
         title: 'Error!',
         text: 'Please select a room before submitting.',
@@ -186,9 +201,8 @@ export default function CheckinModal() {
       });
       return;
     }
-  
+
     if (additionalGuests.some((guest) => !guest.nom || !guest.prenom || !guest.cin)) {
-      console.log('Missing guest information');
       Swal.fire({
         title: 'Error!',
         text: 'Please fill in all guest information.',
@@ -197,7 +211,7 @@ export default function CheckinModal() {
       });
       return;
     }
-  
+
     // Create the Sejour payload (without id_sejour)
     const newSejour = {
       reservation_Id: parseInt(selectedReservation.id),
@@ -208,9 +222,7 @@ export default function CheckinModal() {
       montant_Total_Sejour: parseFloat(totalAmount),
       caution: parseFloat(cautionValue),
     };
-  
-    console.log('Creating Sejour - Payload:', newSejour); // Debugging
-  
+
     try {
       // Step 1: Create the Sejour
       const sejourResponse = await fetch('https://localhost:7141/api/Sejour', {
@@ -220,18 +232,14 @@ export default function CheckinModal() {
         },
         body: JSON.stringify(newSejour),
       });
-  
-      console.log('Sejour API Response:', sejourResponse); // Debugging
-  
+
       if (!sejourResponse.ok) {
-        const errorText = await sejourResponse.text(); // Get the raw response text
-        console.error('Server Error Response:', errorText); // Debugging
+        const errorText = await sejourResponse.text();
         throw new Error('Failed to create Sejour');
       }
-  
+
       const sejourData = await sejourResponse.json();
-      console.log('Created Sejour:', sejourData); // Debugging
-  
+
       // Step 2: Create GuestInfo with the Sejour ID
       const guestInfosPayload = additionalGuests.map(guest => ({
         nom: guest.nom,
@@ -239,9 +247,7 @@ export default function CheckinModal() {
         cin: guest.cin,
         sejourId: sejourData.id_sejour, // Link to the newly created Sejour
       }));
-  
-      console.log('Creating GuestInfo - Payload:', guestInfosPayload); // Debugging
-  
+
       const guestsResponse = await fetch('https://localhost:7141/api/GuestInfo/Bulk', {
         method: 'POST',
         headers: {
@@ -249,51 +255,43 @@ export default function CheckinModal() {
         },
         body: JSON.stringify(guestInfosPayload),
       });
-  
-      console.log('GuestInfo API Response:', guestsResponse); // Debugging
-  
+
       if (!guestsResponse.ok) {
-        const errorText = await guestsResponse.text(); // Get the raw response text
-        console.error('Server Error Response:', errorText); // Debugging
+        const errorText = await guestsResponse.text();
         throw new Error('Failed to create GuestInfo');
       }
-  
-      // Step 3: Create Payment
+
+      // Step 3: Check if a Paiement already exists for this reservation
       const paiementsResponse = await fetch(`https://localhost:7141/api/paiements/reservation/${selectedReservation.id}`);
-      console.log('Paiements API Response:', paiementsResponse); // Debugging
-  
       if (!paiementsResponse.ok) {
-        const errorText = await paiementsResponse.text(); // Get the raw response text
-        console.error('Server Error Response:', errorText); // Debugging
+        const errorText = await paiementsResponse.text();
         throw new Error('Failed to fetch paiements');
       }
-  
+
       const paiements = await paiementsResponse.json();
-      console.log('Fetched Paiements:', paiements); // Debugging
-  
+
       let paiement;
-  
+
       if (paiements.length > 0) {
+        // Update existing Paiement
         paiement = paiements[0];
         paiement.montant += parseFloat(totalAmount);
         paiement.sejourId = sejourData.id_sejour; // Link to the newly created Sejour
-  
-        const updateResponse = await fetch(`https://localhost:7141/api/paiements/${paiement.idPaiement}`, {
+
+        const updateResponse = await fetch(`https://localhost:7141/api/paiements/reservation/${selectedReservation.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(paiement),
         });
-  
-        console.log('Update Paiement API Response:', updateResponse); // Debugging
-  
+
         if (!updateResponse.ok) {
-          const errorText = await updateResponse.text(); // Get the raw response text
-          console.error('Server Error Response:', errorText); // Debugging
+          const errorText = await updateResponse.text();
           throw new Error('Failed to update Paiement');
         }
       } else {
+        // Create new Paiement
         const newPayment = {
           reservationId: parseInt(selectedReservation.id),
           montant: parseFloat(totalAmount),
@@ -302,7 +300,7 @@ export default function CheckinModal() {
           statutPaiement: 1,
           sejourId: sejourData.id_sejour, // Link to the newly created Sejour
         };
-  
+
         const createResponse = await fetch('https://localhost:7141/api/paiements', {
           method: 'POST',
           headers: {
@@ -310,19 +308,40 @@ export default function CheckinModal() {
           },
           body: JSON.stringify(newPayment),
         });
-  
-        console.log('Create Paiement API Response:', createResponse); // Debugging
-  
+
         if (!createResponse.ok) {
-          const errorText = await createResponse.text(); // Get the raw response text
-          console.error('Server Error Response:', errorText); // Debugging
+          const errorText = await createResponse.text();
           throw new Error('Failed to create Paiement');
         }
       }
-  
+
+      // Step 4: Create ConsommationService for each selected service
+      for (const service of selectedServices) {
+        const consommationServicePayload = {
+          serviceId: service.id_Service,
+          sejourId: sejourData.id_sejour,
+          date: service.date,
+          heure: service.heure,
+          quantite_Service: service.quantite_Service,
+        };
+
+        const consommationServiceResponse = await fetch('https://localhost:7141/api/ConsommationService', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(consommationServicePayload),
+        });
+
+        if (!consommationServiceResponse.ok) {
+          const errorText = await consommationServiceResponse.text();
+          throw new Error('Failed to create ConsommationService');
+        }
+      }
+
       Swal.fire({
         title: 'Success!',
-        text: 'Sejour, GuestInfo, and Payment updated successfully.',
+        text: 'Sejour, GuestInfo, Payment, and ConsommationService updated successfully.',
         icon: 'success',
         confirmButtonColor: '#8CD4B9',
       });
@@ -330,12 +349,13 @@ export default function CheckinModal() {
       console.error('Error:', error);
       Swal.fire({
         title: 'Error!',
-        text: 'Failed to create Sejour, GuestInfo, or Payment',
+        text: 'Failed to create Sejour, GuestInfo, Payment, or ConsommationService',
         icon: 'error',
         confirmButtonColor: '#F8B1A5',
       });
     }
-  }; 
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-visible">
@@ -345,43 +365,47 @@ export default function CheckinModal() {
 
         <div className="p-6">
           {/* Display reservations and handle selection */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-In Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-Out Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {reservations.map((reservation) => (
-                  <tr key={reservation.id}>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{reservation.id}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {reservation.nom} {reservation.prenom}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(reservation.dateCheckIn).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(reservation.dateCheckOut).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleReservationSelect(reservation)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                      >
-                        Select
-                      </button>
-                    </td>
+          {filteredReservations.length === 0 ? (
+            <p className="text-center text-gray-500">No reservations for today.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-In Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-Out Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredReservations.map((reservation) => (
+                    <tr key={reservation.id}>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{reservation.id}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {reservation.nom} {reservation.prenom}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(reservation.dateCheckIn).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(reservation.dateCheckOut).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => handleReservationSelect(reservation)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        >
+                          Select
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {selectedReservation && (
             <div className="mt-8">
@@ -616,18 +640,12 @@ export default function CheckinModal() {
                   type="datetime-local"
                   min={new Date(selectedReservation.dateCheckIn).toISOString().slice(0, 16)}
                   max={new Date(selectedReservation.dateCheckOut).toISOString().slice(0, 16)}
-                  onChange={(e) => {
-                    console.log('Selected Date and Time:', e.target.value); // Debugging
-                    setSelectedDateTime(e.target.value);
-                  }}
+                  onChange={(e) => setSelectedDateTime(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
                 <div className="mt-4 flex justify-end space-x-4">
                   <button
-                    onClick={() => {
-                      console.log('Service Modal Cancelled'); // Debugging
-                      setShowServiceModal(false);
-                    }}
+                    onClick={() => setShowServiceModal(false)}
                     className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                   >
                     Cancel

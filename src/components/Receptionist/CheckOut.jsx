@@ -17,8 +17,8 @@ export default function CheckOut() {
         // Fetch guest names for each Sejour
         const sejoursWithGuestNames = await Promise.all(
           sejours.map(async (sejour) => {
-            const reservationResponse = await axios.get(`https://localhost:7141/api/Reservations/${sejour.Reservation_Id}`);
-            const guestName = reservationResponse.data.NomClient; // Assuming NomClient is the guest name
+            const reservationResponse = await axios.get(`https://localhost:7141/api/Reservations/${sejour.reservation_Id}`);
+            const guestName = `${reservationResponse.data.nom} ${reservationResponse.data.prenom}`; // Assuming NomClient is the guest name
             return {
               ...sejour,
               guestName,
@@ -40,14 +40,14 @@ export default function CheckOut() {
     const searchText = searchTerm.toLowerCase();
     return (
       checkOut.guestName.toLowerCase().includes(searchText) ||
-      checkOut.Reservation_Id.toString().includes(searchText) ||
-      checkOut.NumChambre.toString().includes(searchText)
+      checkOut.reservation_Id.toString().includes(searchText) ||
+      checkOut.numChambre.toString().includes(searchText)
     );
   });
 
   const sortedCheckOuts = [...filteredCheckOuts].sort((a, b) => {
     if (sortBy === 'amount') {
-      return b.Montant_Total_Sejour - a.Montant_Total_Sejour;
+      return b.montant_Total_Sejour - a.montant_Total_Sejour;
     }
     return 0;
   });
@@ -55,7 +55,7 @@ export default function CheckOut() {
   const handlePayment = (id) => {
     setCheckOuts((prevCheckOuts) =>
       prevCheckOuts.map((checkOut) =>
-        checkOut.Id_sejour === id ? { ...checkOut, paymentStatus: 'Paid' } : checkOut
+        checkOut.id_sejour === id ? { ...checkOut, paymentStatus: 'Paid' } : checkOut
       )
     );
   };
@@ -118,26 +118,26 @@ export default function CheckOut() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedCheckOuts.map((checkOut) => (
-              <tr key={checkOut.Id_sejour} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{checkOut.Id_sejour}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{checkOut.Reservation_Id}</td>
+              <tr key={checkOut.id_sejour} className="hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{checkOut.id_sejour}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{checkOut.reservation_Id}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{checkOut.guestName}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(checkOut.Date_Checkout).toLocaleDateString()}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{checkOut.Statut_Caution}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(checkOut.date_Checkout).toLocaleDateString()}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{checkOut.statut_caution}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  ${checkOut.Montant_Total_Sejour.toFixed(2)}
+                  ${checkOut.montant_Total_Sejour.toFixed(2)}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handlePayment(checkOut.Id_sejour)}
+                      onClick={() => handlePayment(checkOut.id_sejour)}
                       className="flex items-center gap-1 text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md transition-colors"
                     >
                       <CreditCard size={16} />
                       Pay
                     </button>
                     <button
-                      onClick={() => handlePrintInvoice(checkOut.Id_sejour)}
+                      onClick={() => handlePrintInvoice(checkOut.id_sejour)}
                       className="flex items-center gap-1 text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md transition-colors"
                     >
                       <Printer size={16} />
