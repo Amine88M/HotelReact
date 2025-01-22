@@ -21,6 +21,7 @@ import CheckOutModal from './components/Receptionist/CheckOutModal';
 import ReserverServices from './components/InterfaceService/ReserverServices';
 import CreateService from './components/InterfaceService/CreateService';
 import './App.css';
+import AdminDashboardUI from './components/Admin/AdminDashboardUi';
 
 // Composant Unauthorized directement dans App.js
 const Unauthorized = () => {
@@ -70,6 +71,7 @@ function App() {
           }
         >
           <Route index element={<AdminDashboard />} />
+          <Route path="dashboard" element={<AdminDashboardUI />} />
           <Route path="users" element={<AdminDashboard />} />
           <Route path="users/edit/:id" element={<EditUser />} />
           <Route path="create-user" element={<CreateUserPage />} />
