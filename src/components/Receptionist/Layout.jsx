@@ -96,7 +96,7 @@ export default function Layout({ children }) {
               <Link to="/Receptionist/checkInModal" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Client Check-in
               </Link>
-              <Link to="/Receptionist/checkOutModal" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              <Link to="/Receptionist/checkoutModal" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                 Client Check-out
               </Link>
               <Link to="/Receptionist/today-reservations" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
@@ -180,7 +180,13 @@ export default function Layout({ children }) {
                 <span className="ml-3">Services</span>
               </Link>
             </li>
-           
+            <li>
+              <Link to="/Receptionist/SejourList" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+                <Settings className="w-5 h-5 text-gray-500" /> 
+                {/* Icône pour "Services" */}
+                <span className="ml-3">Sejours</span>
+              </Link>
+            </li>
 
             <li>
               <Link to="/Receptionist/reservations" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
@@ -191,15 +197,15 @@ export default function Layout({ children }) {
 
 
 
-            <li>
-      <Link
-        to="/Receptionist/chambres-disponibles"
-        className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100"
-      >
-        <FaBed className="w-5 h-5 text-gray-500" /> {/* Utilisation de l'icône Bed */}
-        <span className="ml-3">Chambres Disponibles</span>
-      </Link>
-    </li>
+              <li>
+                <Link
+                  to="/Receptionist/chambres-disponibles"
+                  className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100"
+                >
+                  <FaBed className="w-5 h-5 text-gray-500" /> {/* Utilisation de l'icône Bed */}
+                  <span className="ml-3">Chambres Disponibles</span>
+                </Link>
+              </li>
 
 
            
@@ -213,7 +219,7 @@ export default function Layout({ children }) {
         <Outlet />
       </div>
   
-
+     
       
       <Profile 
         isOpen={isProfileModalOpen} 

@@ -58,12 +58,7 @@ export default function ReserverServices() {
               <p className="text-gray-600">{service.description || "Description non disponible"}</p>
               <p className="text-gray-800 font-semibold mt-2">Tarif: MAD {service.tarif || "N/A"}</p>
             </div>
-            <button
-              onClick={() => navigate('reservation', { state: { service } })}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Réserver maintenant
-            </button>
+            {/* Le bouton "Réserver maintenant" a été supprimé ici */}
           </div>
         </div>
       ))}
