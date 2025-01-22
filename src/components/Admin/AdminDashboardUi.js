@@ -65,8 +65,8 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="p-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Tableau de Bord</h1>
-          <p className="text-gray-500 mt-2">Aperçu de l'activité de l'hôtel</p>
+          {/* <h1 className="text-3xl font-bold text-gray-800">Tableau de Bord</h1> */}
+          {/* <p className="text-gray-500 mt-2">Aperçu de l'activité de l'hôtel</p> */}
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -108,7 +108,7 @@ const AdminDashboard = () => {
           />
         </div>
 
-        <QuickActions />
+        {/* <QuickActions /> */}
       </div>
     </div>
   );
