@@ -32,6 +32,7 @@ export default function CheckinModal() {
   const [totalAmount, setTotalAmount] = useState(0); // Total amount based on services
   const [selectedDateTime, setSelectedDateTime] = useState(''); // Track selected date and time
   const [selectedRoomNumber, setSelectedRoomNumber] = useState(null);
+  const [roomTypes, setRoomTypes] = useState([]); // State to store room types
 
   const services = [
     { id_Service: 1, nom_Service: 'Taxi', icon: <FaTaxi />, tarif: 50 },
@@ -92,6 +93,30 @@ export default function CheckinModal() {
     fetchSejours();
   }, []);
 
+  // Fetch room types
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        const response = await fetch('https://localhost:7141/api/reservations/room-types');
+        if (!response.ok) {
+          throw new Error('Failed to fetch room types');
+        }
+        const data = await response.json();
+        setRoomTypes(data);
+      } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Failed to fetch room types',
+          icon: 'error',
+          confirmButtonColor: '#F8B1A5',
+        });
+      }
+    };
+
+    fetchRoomTypes();
+  }, []);
+
   // Filter reservations that are not in Sejour table
   const filteredReservations = reservations.filter(
     (reservation) => !sejours.some((sejour) => sejour.reservation_Id === reservation.id)
@@ -125,6 +150,12 @@ export default function CheckinModal() {
   const filteredRooms = selectedReservation
     ? availableRooms.filter((room) => room.id_Type_Chambre === selectedReservation.id_Type_Chambre)
     : [];
+
+  // Get room type name by id
+  const getRoomTypeName = (id) => {
+    const roomType = roomTypes.find((type) => type.id_Type_Chambre === id);
+    return roomType ? roomType.nom_Type_Chambre : 'N/A';
+  };
 
   // Handle reservation selection
   const handleReservationSelect = (reservation) => {
@@ -201,7 +232,7 @@ export default function CheckinModal() {
       });
       return;
     }
-
+  
     if (additionalGuests.some((guest) => !guest.nom || !guest.prenom || !guest.cin)) {
       Swal.fire({
         title: 'Error!',
@@ -211,7 +242,7 @@ export default function CheckinModal() {
       });
       return;
     }
-
+  
     // Create the Sejour payload (without id_sejour)
     const newSejour = {
       reservation_Id: parseInt(selectedReservation.id),
@@ -222,7 +253,7 @@ export default function CheckinModal() {
       montant_Total_Sejour: parseFloat(totalAmount),
       caution: parseFloat(cautionValue),
     };
-
+  
     try {
       // Step 1: Create the Sejour
       const sejourResponse = await fetch('https://localhost:7141/api/Sejour', {
@@ -232,22 +263,39 @@ export default function CheckinModal() {
         },
         body: JSON.stringify(newSejour),
       });
-
+  
       if (!sejourResponse.ok) {
         const errorText = await sejourResponse.text();
         throw new Error('Failed to create Sejour');
       }
-
+  
       const sejourData = await sejourResponse.json();
-
-      // Step 2: Create GuestInfo with the Sejour ID
-      const guestInfosPayload = additionalGuests.map(guest => ({
+      const sejourId = sejourData.id_sejour; // Get the id_sejour from the created Sejour
+  
+      // Step 2: Update the room status to "Occupée"
+      const updateRoomStatusResponse = await fetch(
+        `https://localhost:7141/api/chambre/${selectedRoomNumber}/update-status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(1), // 1 = Occupée
+        }
+      );
+  
+      if (!updateRoomStatusResponse.ok) {
+        throw new Error('Failed to update room status');
+      }
+  
+      // Step 3: Create GuestInfo with the Sejour ID
+      const guestInfosPayload = additionalGuests.map((guest) => ({
         nom: guest.nom,
         prenom: guest.prenom,
         cin: guest.cin,
-        sejourId: sejourData.id_sejour, // Link to the newly created Sejour
+        sejourId: sejourId, // Link to the newly created Sejour
       }));
-
+  
       const guestsResponse = await fetch('https://localhost:7141/api/GuestInfo/Bulk', {
         method: 'POST',
         headers: {
@@ -255,37 +303,42 @@ export default function CheckinModal() {
         },
         body: JSON.stringify(guestInfosPayload),
       });
-
+  
       if (!guestsResponse.ok) {
         const errorText = await guestsResponse.text();
         throw new Error('Failed to create GuestInfo');
       }
-
-      // Step 3: Check if a Paiement already exists for this reservation
-      const paiementsResponse = await fetch(`https://localhost:7141/api/paiements/reservation/${selectedReservation.id}`);
+  
+      // Step 4: Check if a Paiement already exists for this reservation
+      const paiementsResponse = await fetch(
+        `https://localhost:7141/api/paiements/reservation/${selectedReservation.id}`
+      );
       if (!paiementsResponse.ok) {
         const errorText = await paiementsResponse.text();
         throw new Error('Failed to fetch paiements');
       }
-
+  
       const paiements = await paiementsResponse.json();
-
+  
       let paiement;
-
+  
       if (paiements.length > 0) {
         // Update existing Paiement
         paiement = paiements[0];
         paiement.montant += parseFloat(totalAmount);
-        paiement.sejourId = sejourData.id_sejour; // Link to the newly created Sejour
-
-        const updateResponse = await fetch(`https://localhost:7141/api/paiements/reservation/${selectedReservation.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(paiement),
-        });
-
+        paiement.sejourId = sejourId; // Link to the newly created Sejour
+  
+        const updateResponse = await fetch(
+          `https://localhost:7141/api/paiements/reservation/${selectedReservation.id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(paiement),
+          }
+        );
+  
         if (!updateResponse.ok) {
           const errorText = await updateResponse.text();
           throw new Error('Failed to update Paiement');
@@ -297,10 +350,10 @@ export default function CheckinModal() {
           montant: parseFloat(totalAmount),
           methodPaiement: paymentMethod,
           datePaiement: new Date().toISOString(),
-          statutPaiement: 1,
-          sejourId: sejourData.id_sejour, // Link to the newly created Sejour
+          statutPaiement: 1, // Payé
+          sejourId: sejourId, // Link to the newly created Sejour
         };
-
+  
         const createResponse = await fetch('https://localhost:7141/api/paiements', {
           method: 'POST',
           headers: {
@@ -308,48 +361,61 @@ export default function CheckinModal() {
           },
           body: JSON.stringify(newPayment),
         });
-
+  
         if (!createResponse.ok) {
           const errorText = await createResponse.text();
           throw new Error('Failed to create Paiement');
         }
       }
-
-      // Step 4: Create ConsommationService for each selected service
+  
+      // Step 5: Create ConsommationService for each selected service
       for (const service of selectedServices) {
         const consommationServicePayload = {
           serviceId: service.id_Service,
-          sejourId: sejourData.id_sejour,
+          sejourId: sejourId, // Link to the newly created Sejour
           date: service.date,
           heure: service.heure,
           quantite_Service: service.quantite_Service,
         };
-
-        const consommationServiceResponse = await fetch('https://localhost:7141/api/ConsommationService', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(consommationServicePayload),
-        });
-
+  
+        const consommationServiceResponse = await fetch(
+          'https://localhost:7141/api/ConsommationService',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(consommationServicePayload),
+          }
+        );
+  
         if (!consommationServiceResponse.ok) {
           const errorText = await consommationServiceResponse.text();
           throw new Error('Failed to create ConsommationService');
         }
       }
-
+  
+      // Show success message
       Swal.fire({
         title: 'Success!',
-        text: 'Sejour, GuestInfo, Payment, and ConsommationService updated successfully.',
+        text: 'Check-in completed successfully and room status updated to Occupée.',
         icon: 'success',
         confirmButtonColor: '#8CD4B9',
       });
+  
+      // Reset the form after successful submission
+      setSelectedReservation(null);
+      setAdditionalGuests([]);
+      setSelectedServices([]);
+      setCautionValue(0);
+      setCautionStatus('Active');
+      setTotalAmount(0);
+      setSelectedRoomNumber(null);
     } catch (error) {
       console.error('Error:', error);
       Swal.fire({
         title: 'Error!',
-        text: 'Failed to create Sejour, GuestInfo, Payment, or ConsommationService',
+        text: 'Failed to complete check-in.',
         icon: 'error',
         confirmButtonColor: '#F8B1A5',
       });
@@ -376,6 +442,7 @@ export default function CheckinModal() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest Name</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-In Date</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-Out Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room Type</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -391,6 +458,9 @@ export default function CheckinModal() {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(reservation.dateCheckOut).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {getRoomTypeName(reservation.id_Type_Chambre)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                         <button
@@ -436,7 +506,7 @@ export default function CheckinModal() {
                 <div>
                   <p className="text-sm font-medium text-gray-500">Room Type</p>
                   <p className="mt-1 text-lg font-semibold text-gray-900">
-                    {selectedReservation.id_Type_Chambre?.nom_Type_Chambre}
+                    {getRoomTypeName(selectedReservation.id_Type_Chambre)}
                   </p>
                 </div>
                 <div>

@@ -3,13 +3,22 @@ import Swal from 'sweetalert2';
 import { FaCreditCard, FaMoneyBillWave, FaCheck, FaTimes } from 'react-icons/fa';
 
 export default function CheckOutComponent() {
-  const [sejours, setSejours] = useState([]); // State to store Sejours with today's checkout
-  const [selectedSejour, setSelectedSejour] = useState(null); // State to store the selected Sejour
-  const [paiements, setPaiements] = useState([]); // State to store Paiements for the selected Sejour
-  const [cautionRetrieve, setCautionRetrieve] = useState(0); // State to store caution retrieve amount
-  const [paymentMethod, setPaymentMethod] = useState('cash'); // State to store payment method
-  const [totalAmount, setTotalAmount] = useState(0); // State to store total amount
-  const [montantRestant, setMontantRestant] = useState(0); // State to store remaining amount
+  const [sejours, setSejours] = useState([]);
+  const [selectedSejour, setSelectedSejour] = useState({
+    id_sejour: null,
+    reservation_Id: null,
+    numChambre: null,
+    date_Checkin: null,
+    date_Checkout: null,
+    guestName: 'N/A',
+    cin: 'N/A',
+    roomType: 'N/A',
+  });
+  const [paiements, setPaiements] = useState([]);
+  const [cautionRetrieve, setCautionRetrieve] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [montantRestant, setMontantRestant] = useState(0);
 
   // Fetch Sejours with today's checkout date
   useEffect(() => {
@@ -18,7 +27,15 @@ export default function CheckOutComponent() {
         const response = await fetch('https://localhost:7141/api/Sejour/today-checkouts');
         if (!response.ok) throw new Error('Failed to fetch Sejours');
         const data = await response.json();
-        setSejours(data);
+
+        // Filter Sejours where checkout time is 14:00 or later
+        const filteredSejours = data.filter((sejour) => {
+          const checkoutDate = new Date(sejour.date_Checkout);
+          const checkoutHour = checkoutDate.getHours();
+          return checkoutHour >= 14; // Only include Sejours with checkout time >= 14:00
+        });
+
+        setSejours(filteredSejours);
       } catch (error) {
         console.error('Error:', error);
         Swal.fire({
@@ -37,17 +54,54 @@ export default function CheckOutComponent() {
   const handleSejourSelect = async (sejour) => {
     setSelectedSejour(sejour);
 
-    // Fetch Paiements for the selected Sejour
     try {
-      const paiementsResponse = await fetch(`https://localhost:7141/api/Paiements/reservation/${sejour.reservation_Id}`);
+      // Fetch Paiements for the selected Sejour
+      const paiementsResponse = await fetch(
+        `https://localhost:7141/api/Paiements/reservation/${sejour.reservation_Id}`
+      );
       if (!paiementsResponse.ok) throw new Error('Failed to fetch Paiements');
       const paiementsData = await paiementsResponse.json();
       setPaiements(paiementsData);
+
+      // Fetch GuestInfo for the selected Sejour
+      const guestInfoResponse = await fetch('https://localhost:7141/api/GuestInfo');
+      if (!guestInfoResponse.ok) throw new Error('Failed to fetch GuestInfo');
+      const guestInfos = await guestInfoResponse.json();
+
+      // Find the primary guest (assuming the first guest is the primary)
+      const primaryGuest = guestInfos.find((guest) => guest.id_sejour === sejour.id_sejour);
+
+      // Fetch the reservation details to get the id_Type_Chambre
+      const reservationResponse = await fetch(
+        `https://localhost:7141/api/reservations/${sejour.reservation_Id}`
+      );
+      if (!reservationResponse.ok) throw new Error('Failed to fetch reservation details');
+      const reservationData = await reservationResponse.json();
+
+      // Fetch the room type name using the id_Type_Chambre from the reservation
+      let roomType = 'N/A';
+      if (reservationData.id_Type_Chambre) {
+        const roomTypeResponse = await fetch(
+          `https://localhost:7141/api/reservations/room-type/${reservationData.id_Type_Chambre}`
+        );
+        if (roomTypeResponse.ok) {
+          const roomTypeData = await roomTypeResponse.json();
+          roomType = roomTypeData.text; // Use the room type name (nom_type_chambre)
+        }
+      }
+
+      // Update the selected Sejour with guest and room type details
+      setSelectedSejour((prevSejour) => ({
+        ...prevSejour,
+        guestName: primaryGuest ? `${primaryGuest.nom} ${primaryGuest.prenom}` : 'N/A',
+        cin: primaryGuest?.cin || 'N/A',
+        roomType,
+      }));
     } catch (error) {
       console.error('Error:', error);
       Swal.fire({
         title: 'Error!',
-        text: 'Failed to fetch Paiements.',
+        text: 'Failed to fetch guest or room type details.',
         icon: 'error',
         confirmButtonColor: '#F8B1A5',
       });
@@ -58,7 +112,7 @@ export default function CheckOutComponent() {
   useEffect(() => {
     if (!selectedSejour || !paiements) return;
 
-    const reservationMontant = selectedSejour.reservation?.prixTotal || 0; // Room price * nights
+    const reservationMontant = selectedSejour.reservation?.prixTotal || 0;
     const totalPaiements = paiements.reduce((sum, paiement) => sum + paiement.montant, 0);
     const montantRestantCalc =
       selectedSejour.montant_Total_Sejour - totalPaiements + reservationMontant - selectedSejour.caution + cautionRetrieve;
@@ -83,13 +137,16 @@ export default function CheckOutComponent() {
 
     try {
       // Update Sejour's Caution Status to "TotallementLibere"
-      const updateCautionResponse = await fetch(`https://localhost:7141/api/Sejour/${selectedSejour.id_sejour}/caution-status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(2), // 2 = TotallementLibere
-      });
+      const updateCautionResponse = await fetch(
+        `https://localhost:7141/api/Sejour/${selectedSejour.id_sejour}/caution-status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(2), // 2 = TotallementLibere
+        }
+      );
 
       if (!updateCautionResponse.ok) throw new Error('Failed to update caution status');
 
@@ -113,12 +170,38 @@ export default function CheckOutComponent() {
 
       if (!createPaiementResponse.ok) throw new Error('Failed to create Paiement');
 
+      // Update the room status to "Disponible"
+      const updateRoomStatusResponse = await fetch(
+        `https://localhost:7141/api/chambre/${selectedSejour.numChambre}/update-status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(0), // 0 = Disponible
+        }
+      );
+
+      if (!updateRoomStatusResponse.ok) throw new Error('Failed to update room status');
+
       // Show success message
       Swal.fire({
         title: 'Success!',
-        text: 'Checkout completed successfully.',
+        text: 'Checkout completed successfully and room status updated to Disponible.',
         icon: 'success',
         confirmButtonColor: '#8CD4B9',
+      });
+
+      // Reset the selected Sejour after successful checkout
+      setSelectedSejour({
+        id_sejour: null,
+        reservation_Id: null,
+        numChambre: null,
+        date_Checkin: null,
+        date_Checkout: null,
+        guestName: 'N/A',
+        cin: 'N/A',
+        roomType: 'N/A',
       });
     } catch (error) {
       console.error('Error:', error);
@@ -137,27 +220,32 @@ export default function CheckOutComponent() {
 
       {/* List of Sejours with today's checkout */}
       <div className="mb-6">
+        
         <h4 className="text-xl font-semibold text-gray-900 mb-2">Sejours with Today's Checkout</h4>
-        <div className="space-y-4">
-          {sejours.map((sejour) => (
-            <div
-              key={sejour.id_sejour}
-              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-              onClick={() => handleSejourSelect(sejour)}
-            >
-              <p className="text-lg font-semibold text-gray-900">
-                Room {sejour.numChambre} - {sejour.reservation?.nom} {sejour.reservation?.prenom}
-              </p>
-              <p className="text-sm text-gray-500">
-                Check-in: {new Date(sejour.date_Checkin).toLocaleDateString()} | Check-out: {new Date(sejour.date_Checkout).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
-        </div>
+        {sejours.length === 0 ? (
+          <h5 className="text-gray-500">Pas de checkout!!</h5>
+        ) : (
+          <div className="space-y-4">
+            {sejours.map((sejour) => (
+              <div
+                key={sejour.id_sejour}
+                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleSejourSelect(sejour)}
+              >
+                <p className="text-lg font-semibold text-gray-900">
+                  Room {sejour.numChambre} - {sejour.reservation?.nom} {sejour.reservation?.prenom}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Check-in: {new Date(sejour.date_Checkin).toLocaleDateString()} | Check-out: {new Date(sejour.date_Checkout).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Selected Sejour Details */}
-      {selectedSejour && (
+      {selectedSejour && selectedSejour.id_sejour && (
         <>
           {/* Guest Information */}
           <div className="mb-6">
@@ -166,12 +254,14 @@ export default function CheckOutComponent() {
               <div>
                 <p className="text-sm font-medium text-gray-500">Guest Name</p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {selectedSejour.reservation?.nom} {selectedSejour.reservation?.prenom}
+                  {selectedSejour.guestName || 'N/A'}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">CIN</p>
-                <p className="text-lg font-semibold text-gray-900">{selectedSejour.additionalGuests[0]?.cin || 'N/A'}</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {selectedSejour.cin || 'N/A'}
+                </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Check-in Date</p>
@@ -194,11 +284,15 @@ export default function CheckOutComponent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-gray-500">Room Number</p>
-                <p className="text-lg font-semibold text-gray-900">{selectedSejour.numChambre}</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {selectedSejour.numChambre}
+                </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Room Type</p>
-                <p className="text-lg font-semibold text-gray-900">{selectedSejour.reservation?.typeChambre?.nom_Type_Chambre || 'N/A'}</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {selectedSejour.roomType || 'N/A'}
+                </p>
               </div>
             </div>
           </div>
