@@ -187,8 +187,29 @@ export default function Reservations() {
   // Annuler une réservation
   const handleCancelReservation = async (id) => {
     try {
-      // Vérifier d'abord si la réservation est déjà annulée
+      // Trouver la réservation correspondante
       const reservation = reservations.find(r => r.id === id);
+  
+      // Vérifier si la date de check-in est aujourd'hui
+      const today = new Date();
+      const checkInDate = new Date(reservation.dateCheckIn);
+  
+      // Comparer les dates en ignorant l'heure
+      if (
+        checkInDate.getFullYear() === today.getFullYear() &&
+        checkInDate.getMonth() === today.getMonth() &&
+        checkInDate.getDate() === today.getDate()
+      ) {
+        Swal.fire({
+          title: 'Erreur!',
+          text: 'Impossible d\'annuler une réservation prévue pour aujourd\'hui.',
+          icon: 'error',
+          confirmButtonColor: '#d33',
+        });
+        return;
+      }
+  
+      // Vérifier si la réservation est déjà annulée
       if (reservation.statut === "Annulée") {
         Swal.fire({
           title: 'Information',
@@ -198,7 +219,7 @@ export default function Reservations() {
         });
         return;
       }
-
+  
       // Première confirmation avec texte à saisir
       const firstConfirm = await Swal.fire({
         title: 'Attention!',
@@ -216,11 +237,11 @@ export default function Reservations() {
           }
         }
       });
-
+  
       if (!firstConfirm.isConfirmed) {
         return;
       }
-
+  
       // Deuxième confirmation finale
       const finalConfirm = await Swal.fire({
         title: 'Dernière vérification',
@@ -232,11 +253,11 @@ export default function Reservations() {
         confirmButtonText: 'Oui, annuler définitivement',
         cancelButtonText: 'Non, retour'
       });
-
+  
       if (!finalConfirm.isConfirmed) {
         return;
       }
-
+  
       // Procéder à l'annulation
       const response = await fetch(`https://localhost:7141/api/reservations/annulerreservation`, {
         method: 'POST',
@@ -246,18 +267,18 @@ export default function Reservations() {
         },
         body: JSON.stringify(id),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Erreur lors de l\'annulation de la réservation');
       }
-
+  
       setReservations((prevReservations) =>
         prevReservations.map((reservation) =>
           reservation.id === id ? { ...reservation, statut: "Annulée" } : reservation
         )
       );
-
+  
       Swal.fire({
         title: 'Succès!',
         text: 'La réservation a été annulée avec succès.',
@@ -274,7 +295,6 @@ export default function Reservations() {
       });
     }
   };
-
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">

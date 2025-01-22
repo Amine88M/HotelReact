@@ -21,7 +21,7 @@ const PersonnelDeMenageUI = () => {
 
   const fetchDirtyRooms = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/chambre/dirty`);
+      const response = await fetch(`${API_BASE_URL}/api/chambre/Dirty`);
       if (!response.ok) throw new Error('Failed to fetch dirty rooms');
       const data = await response.json();
       console.log("Données reçues de l'API :", data); // Vérifiez les données ici

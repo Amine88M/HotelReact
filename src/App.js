@@ -15,6 +15,9 @@ import CheckIn from './components/Receptionist/CheckIn';
 import CheckOut from './components/Receptionist/CheckOut';
 import Details from './components/Receptionist/Details';
 import ChambreList from "./ChambreListe";
+import SejourList from "./components/Receptionist/SejourList";
+import SejourDisplay from "./components/Receptionist/SejourDisplay";
+import Sejour from "./components/Receptionist/Sejour";
 import CreateChambre from './components/Chambres/CreateChambre';
 import CheckInModal from './components/Receptionist/CheckInModal';
 import CheckOutModal from './components/Receptionist/CheckOutModal';
@@ -23,6 +26,7 @@ import CreateService from './components/InterfaceService/CreateService';
 import ReservationPage from './components/InterfaceService/ReservationPage';
 import ConsulterService from './components/InterfaceService/ConsulterService';
 import './App.css';
+import AdminDashboardUI from './components/Admin/AdminDashboardUi';
 
 // Composant Unauthorized directement dans App.js
 const Unauthorized = () => {
@@ -72,6 +76,7 @@ function App() {
           }
         >
           <Route index element={<AdminDashboard />} />
+          <Route path="dashboard" element={<AdminDashboardUI />} />
           <Route path="users" element={<AdminDashboard />} />
           <Route path="users/edit/:id" element={<EditUser />} />
           <Route path="create-user" element={<CreateUserPage />} />
@@ -102,6 +107,12 @@ function App() {
           <Route path="details/:id" element={<Details />} />
           <Route path="reserver-services/reservation" element={<ReservationPage />} />
           <Route path="chambres-disponibles" element={<ChambreList />} />
+          <Route path="SejourList" element={<SejourList />} />
+          <Route path="SejourDisplay" element={<SejourDisplay />} />
+          <Route path="checkInModal" element={<CheckInModal />} />
+          <Route path="checkOutModal" element={<CheckOutModal />} />
+
+
         </Route>
 
         {/* Routes protégées pour le personnel de ménage */}
