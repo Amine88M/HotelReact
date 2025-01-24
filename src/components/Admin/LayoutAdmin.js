@@ -31,7 +31,7 @@ function LayoutAdmin() {
             className="w-64 bg-[#1e3a8a] text-white fixed h-full shadow-lg"
           >
             <div className="p-4 pt-16">
-              <h2 className="text-2xl font-semibold mb-6 px-4">Admin Panel</h2>
+
               
               <nav className="space-y-2">
                 <Link 
@@ -51,18 +51,12 @@ function LayoutAdmin() {
                 </Link>
 
 
-                <Link
-  to="/admin/consulter-service"
-  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
->
-  <FaCogs className="mr-3 text-2xl text-green-400 group-hover:text-white" />
-  <span className="group-hover:text-white">Consulter Services</span>
-</Link>
+                
                 <Link
   to="/admin/create-service"
   className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
 >
-  <FaCogs className="mr-3 text-2xl text-green-400 group-hover:text-white" />
+  <FaCogs className="mr-3 text-2xl text-white-400 group-hover:text-white" />
   <span className="group-hover:text-white">Créer un Service</span>
 </Link>
                 
@@ -75,6 +69,14 @@ function LayoutAdmin() {
       <MdBed className="mr-3 text-2xl text-purple-400 group-hover:text-white" />
       <span className="group-hover:text-white">Créer une chambre</span>
     </Link>
+
+    <Link
+  to="/admin/consulter-service"
+  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
+>
+  <FaCogs className="mr-3 text-2xl text-white-400 group-hover:text-white" />
+  <span className="group-hover:text-white">Liste des Services</span>
+</Link>
 
                 <Link 
                   to="/admin/users" 
@@ -97,13 +99,7 @@ function LayoutAdmin() {
                   <span className="group-hover:text-white">Attribuer Rôles</span>
                 </Link> */}
                 
-                <Link 
-                  to="/admin/reset-password" 
-                  className="flex items-center px-4 py-3 text-gray-300 hover:bg-[#1e40af] rounded-lg transition-colors group"
-                >
-                  <MdPassword className="mr-3 text-2xl text-orange-400 group-hover:text-white" />
-                  <span className="group-hover:text-white">Réinitialiser Mot de Passe</span>
-                </Link>
+               
               </nav>
             </div>
 

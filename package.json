@@ -12,6 +12,7 @@
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
+    "date-fns": "^4.1.0",
     "framer-motion": "^11.18.1",
     "lucide-react": "^0.469.0",
     "moment": "^2.30.1",

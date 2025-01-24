@@ -11,10 +11,10 @@ export default function CreateChambre() {
 
   // Mapping des types de chambre
   const typesChambres = [
-    { id: 5, label: 'Simple' },
-    { id: 6, label: 'Double' },
-    { id: 8, label: 'Suite' },
-    { id: 9, label: 'Familiale' },
+    { id: 1, label: 'Simple' },
+    { id: 2, label: 'Double' },
+    { id: 3, label: 'Suite' },
+    { id: 4, label: 'Familiale' },
   ];
 
   // Mapping des états de chambre
