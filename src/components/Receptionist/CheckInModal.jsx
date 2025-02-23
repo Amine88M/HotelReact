@@ -138,18 +138,24 @@ export default function CheckinModal() {
   // Fetch available rooms
   useEffect(() => {
     const fetchAvailableRooms = async () => {
+      if (!selectedReservation) return; // Only fetch when a reservation is selected
+      
       try {
-        const response = await fetch('https://localhost:7141/api/chambre/disponibles');
+        const response = await fetch(`https://localhost:7141/api/CheckIn/GetAvailableRooms?typeId=${selectedReservation.id_Type_Chambre}`);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch available rooms');
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch available rooms: ${errorText}`);
         }
+        
         const data = await response.json();
+        console.log('Available rooms:', data); // Debug log
         setAvailableRooms(data);
       } catch (error) {
         console.error('Error:', error);
         Swal.fire({
           title: 'Error!',
-          text: 'Failed to fetch available rooms',
+          text: error.message || 'Failed to fetch available rooms',
           icon: 'error',
           confirmButtonColor: '#F8B1A5',
         });
@@ -157,7 +163,7 @@ export default function CheckinModal() {
     };
 
     fetchAvailableRooms();
-  }, []);
+  }, [selectedReservation]); // Dependency on selectedReservation
 
   // Filter available rooms by the selected reservation's TypeChambre
   const filteredRooms = selectedReservation
@@ -171,6 +177,7 @@ export default function CheckinModal() {
 
   // Handle reservation selection
   const handleReservationSelect = (reservation) => {
+    console.log('Selected Reservation:', reservation); // Debug log
     setSelectedReservation(reservation);
 
     // Initialize additional guests based on the number of adults in the reservation
@@ -181,6 +188,7 @@ export default function CheckinModal() {
     }));
 
     setAdditionalGuests(newAdditionalGuests);
+    setSelectedRoomNumber(null); // Reset selected room when changing reservation
   };
 
   // Handle additional guest input change
@@ -531,17 +539,22 @@ export default function CheckinModal() {
 
               <div className="mt-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Available Rooms</h3>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  onChange={(e) => setSelectedRoomNumber(e.target.value)}
-                >
-                  <option value="">Select a room</option>
-                  {filteredRooms.map((room) => (
-                    <option key={room.numChambre} value={room.numChambre}>
-                      Room {room.numChambre}
-                    </option>
-                  ))}
-                </select>
+                {availableRooms.length > 0 ? (
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    onChange={(e) => setSelectedRoomNumber(e.target.value)}
+                    value={selectedRoomNumber || ''}
+                  >
+                    <option value="">Select a room</option>
+                    {availableRooms.map((room) => (
+                      <option key={room.numChambre} value={room.numChambre}>
+                        Room {room.numChambre}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-red-500">No available rooms found for this room type.</p>
+                )}
               </div>
 
               <div className="mt-8">
